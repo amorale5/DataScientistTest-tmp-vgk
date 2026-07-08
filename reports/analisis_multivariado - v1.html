@@ -1,0 +1,1760 @@
+<meta charset="utf-8">
+<title>Análisis multivariado — train.csv</title>
+<style>
+.viz-root {
+  --surface-1:      #fcfcfb;
+  --page-plane:     #f9f9f7;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #898781;
+  --gridline:       #e1e0d9;
+  --baseline:       #c3c2b7;
+  --series-1:       #2a78d6;
+  --series-2:       #e34948;
+  --border:         rgba(11,11,11,0.10);
+  --bad:            #d03b3b;
+  --warn:           #eda100;
+  --good:           #0ca30c;
+}
+@media (prefers-color-scheme: dark) {
+  .viz-root {
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --series-1:       #3987e5;
+    --series-2:       #e66767;
+    --border:         rgba(255,255,255,0.10);
+    --bad:            #e66767;
+    --warn:           #c98500;
+    --good:           #0ca30c;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  --surface-1:      #1a1a19;
+  --page-plane:     #0d0d0d;
+  --text-primary:   #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted:     #898781;
+  --gridline:       #2c2c2a;
+  --baseline:       #383835;
+  --series-1:       #3987e5;
+  --series-2:       #e66767;
+  --border:         rgba(255,255,255,0.10);
+  --bad:            #e66767;
+  --warn:           #c98500;
+  --good:           #0ca30c;
+}
+:root[data-theme="light"] .viz-root {
+  --surface-1:      #fcfcfb;
+  --page-plane:     #f9f9f7;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #898781;
+  --gridline:       #e1e0d9;
+  --baseline:       #c3c2b7;
+  --series-1:       #2a78d6;
+  --series-2:       #e34948;
+  --border:         rgba(11,11,11,0.10);
+  --bad:            #d03b3b;
+  --warn:           #eda100;
+  --good:           #0ca30c;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+.viz-root {
+  background: var(--page-plane);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: 24px 16px 64px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin: 0 0 4px; }
+.subtitle { color: var(--text-secondary); font-size: 0.92rem; margin: 0 0 20px; max-width: 900px; }
+h2 { font-size: 1.15rem; margin: 40px 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h2 .n { color: var(--text-muted); font-weight: 400; font-size: 0.85rem; }
+.section-intro { color: var(--text-secondary); font-size: 0.85rem; margin: 8px 0 16px; max-width: 900px; line-height: 1.5; }
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px 14px;
+  margin-bottom: 16px;
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+
+.note-row {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: var(--page-plane);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 10px 0;
+  line-height: 1.5;
+}
+.note-row b { color: var(--text-primary); }
+.note-row.crit { border-left: 3px solid var(--bad); }
+.note-row.extra { border-left: 3px solid var(--warn); }
+.note-row.dist { border-left: 3px solid var(--series-1); }
+.note-row.good { border-left: 3px solid var(--good); }
+
+table.datatable { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+table.datatable th, table.datatable td { text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+table.datatable th:first-child, table.datatable td:first-child { text-align: left; font-variant-numeric: normal; }
+table.datatable th { color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: .02em; }
+table.datatable tbody tr:hover { background: var(--page-plane); }
+.sig-yes { color: var(--good); font-weight: 600; }
+.sig-no { color: var(--text-muted); }
+
+.heatmap-wrap { overflow-x: auto; }
+.heatmap { display: grid; gap: 2px; font-size: 0.68rem; }
+.heat-cell {
+  padding: 6px 4px; text-align: center; border-radius: 3px; font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden;
+}
+.heat-label { color: var(--text-secondary); font-size: 0.68rem; display: flex; align-items: center; padding: 2px 6px; }
+.heat-label.corner { color: var(--text-muted); }
+.heat-label.col { writing-mode: vertical-rl; transform: rotate(180deg); justify-content: flex-start; }
+
+.bar-row { display: grid; grid-template-columns: 190px 1fr 90px; align-items: center; gap: 8px; margin: 6px 0; }
+.bar-label { font-size: 0.8rem; color: var(--text-secondary); text-align: right; white-space: normal; line-height: 1.3; }
+.bar-label .tag { white-space: nowrap; }
+.bar-track { background: var(--page-plane); border-radius: 4px; height: 16px; position: relative; }
+.bar-fill { height: 100%; border-radius: 4px; }
+.bar-val { font-size: 0.76rem; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.bar-thresh { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--baseline); }
+.bar-thresh-label { position: absolute; top: -16px; font-size: 0.6rem; color: var(--text-muted); transform: translateX(-50%); white-space: nowrap; }
+
+.legend-row { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.72rem; color: var(--text-muted); margin: 6px 0 2px; }
+.legend-sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+
+.footer-note { color: var(--text-muted); font-size: 0.76rem; margin-top: 32px; line-height: 1.6; }
+.tag { display: inline-block; font-size: 0.68rem; padding: 1px 7px; border-radius: 999px; font-weight: 600; margin-left: 6px; }
+.tag.leak { background: rgba(208,59,59,0.15); color: var(--bad); }
+.tag.strong { background: rgba(10,163,10,0.12); color: var(--good); }
+</style>
+
+<div class="viz-root">
+  <div class="wrap">
+    <h1>Análisis multivariado — train.csv</h1>
+    <p class="subtitle">Correlación, multicolinealidad, heterocedasticidad, ANOVA/Chi-cuadrado e Information Value, sobre las 45.300 solicitudes de train, orientado a las decisiones de modelamiento de un score de morosidad (default_12m).</p>
+
+    <h2>1. Correlación entre variables numéricas</h2>
+    <p class="section-intro">Pearson (relación lineal) y Spearman (relación monotónica, más robusta a la fuerte asimetría de varias variables). Se muestra Spearman por defecto ya que es más representativo dado el sesgo de deuda_sistema, ingreso_declarado y monto_solicitado.</p>
+    <div class="card">
+      <div class="legend-row" id="corr-legend"></div>
+      <div class="heatmap-wrap"><div class="heatmap" id="corr-heatmap"></div></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;font-size:0.95rem;">Pares con correlación relevante (|r| ≥ 0,35)</h3>
+      <table class="datatable" id="pairs-table"></table>
+    </div>
+
+    <h2>2. Correlación de cada variable con el target</h2>
+    <p class="section-intro">Point-biserial (equivalente a Pearson con el target binario) y Spearman. Ordenado por magnitud.</p>
+    <div class="card">
+      <div id="target-corr-chart"></div>
+    </div>
+
+    <h2>3. Multicolinealidad (VIF)</h2>
+    <p class="section-intro">Variance Inflation Factor sobre el set de variables numéricas (con imputación de mediana solo para este diagnóstico, y log1p en las variables monetarias muy sesgadas). Regla práctica: VIF &gt; 5 es preocupante, VIF &gt; 10 obliga a actuar.</p>
+    <div class="card">
+      <table class="datatable" id="vif-table"></table>
+      <div class="note-row good" id="vif-note"></div>
+    </div>
+
+    <h2>4. Heterocedasticidad</h2>
+    <p class="section-intro">4a. Test de Levene: ¿la varianza de cada variable numérica es distinta entre quienes caen en default y quienes no? 4b. Breusch-Pagan sobre un modelo de probabilidad lineal (OLS de default_12m contra variables clave), para evaluar si un enfoque lineal simple sería apropiado.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3 style="margin-top:0;font-size:0.95rem;">4a. Levene (varianza por grupo de default)</h3>
+        <table class="datatable" id="levene-table"></table>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;font-size:0.95rem;">4b. Breusch-Pagan (modelo de probabilidad lineal)</h3>
+        <div id="bp-content"></div>
+      </div>
+    </div>
+
+    <h2>5. ANOVA (numéricas por grupo) y Chi-cuadrado (categóricas vs target)</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3 style="margin-top:0;font-size:0.95rem;">ANOVA de un factor</h3>
+        <table class="datatable" id="anova-table"></table>
+        <div class="note-row extra" id="anova-note"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;font-size:0.95rem;">Chi-cuadrado vs default_12m</h3>
+        <table class="datatable" id="chi2-table"></table>
+      </div>
+    </div>
+
+    <h2>6. Information Value (IV) — poder predictivo univariado</h2>
+    <p class="section-intro">Escala estándar de riesgo crediticio: &lt;0,02 sin poder predictivo · 0,02–0,1 débil · 0,1–0,3 medio · 0,3–0,5 fuerte · &gt;0,5 sospechoso de fuga de información (revisar si la variable se conoce realmente antes de otorgar el crédito).</p>
+    <div class="card">
+      <div id="iv-chart"></div>
+    </div>
+
+    <h2>7. Cruces relevantes</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3 style="margin-top:0;font-size:0.95rem;">Tasa de default: tipo_empleo × canal</h3>
+        <div class="heatmap-wrap"><div class="heatmap" id="cross-tc-heatmap"></div></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;font-size:0.95rem;">Tasa de default: score_buro (quintiles) × peor_morosidad_12m</h3>
+        <div class="heatmap-wrap"><div class="heatmap" id="cross-sm-heatmap"></div></div>
+      </div>
+    </div>
+
+    <h2>8. Síntesis para el modelamiento</h2>
+    <div class="card" id="synthesis"></div>
+
+    <p class="footer-note" id="footer-note"></p>
+  </div>
+</div>
+
+<script id="report-data" type="application/json">
+{
+  "n_total": 45300,
+  "num_vars": [
+    "edad",
+    "ingreso_declarado",
+    "antiguedad_laboral_meses",
+    "antiguedad_cliente_meses",
+    "score_buro",
+    "deuda_sistema",
+    "num_creditos_vigentes",
+    "peor_morosidad_12m",
+    "num_consultas_buro_3m",
+    "num_contactos_ult_trimestre",
+    "uso_linea_credito_pct",
+    "monto_solicitado",
+    "plazo_meses",
+    "tasa_interes_anual"
+  ],
+  "num_labels": {
+    "edad": "Edad",
+    "ingreso_declarado": "Ingreso declarado",
+    "antiguedad_laboral_meses": "Antig\u00fcedad laboral",
+    "antiguedad_cliente_meses": "Antig\u00fcedad cliente",
+    "score_buro": "Score bur\u00f3",
+    "deuda_sistema": "Deuda sistema",
+    "num_creditos_vigentes": "N cr\u00e9ditos vigentes",
+    "peor_morosidad_12m": "Peor morosidad 12m",
+    "num_consultas_buro_3m": "Consultas bur\u00f3 3m",
+    "num_contactos_ult_trimestre": "Contactos \u00falt. trim.",
+    "uso_linea_credito_pct": "Uso l\u00ednea cr\u00e9dito %",
+    "monto_solicitado": "Monto solicitado",
+    "plazo_meses": "Plazo meses",
+    "tasa_interes_anual": "Tasa inter\u00e9s anual"
+  },
+  "cat_labels": {
+    "tipo_empleo": "Tipo de empleo",
+    "region": "Regi\u00f3n",
+    "canal": "Canal",
+    "dia_semana_solicitud": "D\u00eda semana (no confiable)"
+  },
+  "leakage_var": "num_contactos_ult_trimestre",
+  "pearson_matrix": [
+    [
+      1.0,
+      -0.013,
+      0.2,
+      0.001,
+      0.135,
+      -0.038,
+      -0.081,
+      -0.037,
+      -0.098,
+      -0.05,
+      -0.096,
+      0.0,
+      -0.001,
+      -0.113
+    ],
+    [
+      -0.013,
+      1.0,
+      0.015,
+      -0.005,
+      0.084,
+      0.291,
+      -0.054,
+      -0.032,
+      -0.062,
+      -0.029,
+      -0.063,
+      0.004,
+      -0.006,
+      -0.072
+    ],
+    [
+      0.2,
+      0.015,
+      1.0,
+      -0.004,
+      0.049,
+      -0.002,
+      -0.031,
+      -0.024,
+      -0.031,
+      -0.036,
+      -0.031,
+      -0.001,
+      0.007,
+      -0.037
+    ],
+    [
+      0.001,
+      -0.005,
+      -0.004,
+      1.0,
+      -0.003,
+      -0.005,
+      0.003,
+      -0.0,
+      -0.007,
+      -0.015,
+      -0.003,
+      -0.001,
+      -0.005,
+      -0.005
+    ],
+    [
+      0.135,
+      0.084,
+      0.049,
+      -0.003,
+      1.0,
+      -0.129,
+      -0.38,
+      -0.219,
+      -0.458,
+      -0.247,
+      -0.471,
+      -0.001,
+      0.004,
+      -0.557
+    ],
+    [
+      -0.038,
+      0.291,
+      -0.002,
+      -0.005,
+      -0.129,
+      1.0,
+      0.071,
+      0.044,
+      0.091,
+      0.077,
+      0.088,
+      0.001,
+      0.003,
+      0.101
+    ],
+    [
+      -0.081,
+      -0.054,
+      -0.031,
+      0.003,
+      -0.38,
+      0.071,
+      1.0,
+      0.122,
+      0.27,
+      0.117,
+      0.275,
+      0.004,
+      -0.011,
+      0.318
+    ],
+    [
+      -0.037,
+      -0.032,
+      -0.024,
+      -0.0,
+      -0.219,
+      0.044,
+      0.122,
+      1.0,
+      0.154,
+      0.133,
+      0.156,
+      -0.005,
+      -0.001,
+      0.181
+    ],
+    [
+      -0.098,
+      -0.062,
+      -0.031,
+      -0.007,
+      -0.458,
+      0.091,
+      0.27,
+      0.154,
+      1.0,
+      0.189,
+      0.33,
+      -0.001,
+      -0.01,
+      0.379
+    ],
+    [
+      -0.05,
+      -0.029,
+      -0.036,
+      -0.015,
+      -0.247,
+      0.077,
+      0.117,
+      0.133,
+      0.189,
+      1.0,
+      0.186,
+      0.032,
+      0.034,
+      0.158
+    ],
+    [
+      -0.096,
+      -0.063,
+      -0.031,
+      -0.003,
+      -0.471,
+      0.088,
+      0.275,
+      0.156,
+      0.33,
+      0.186,
+      1.0,
+      -0.003,
+      0.002,
+      0.387
+    ],
+    [
+      0.0,
+      0.004,
+      -0.001,
+      -0.001,
+      -0.001,
+      0.001,
+      0.004,
+      -0.005,
+      -0.001,
+      0.032,
+      -0.003,
+      1.0,
+      0.008,
+      0.001
+    ],
+    [
+      -0.001,
+      -0.006,
+      0.007,
+      -0.005,
+      0.004,
+      0.003,
+      -0.011,
+      -0.001,
+      -0.01,
+      0.034,
+      0.002,
+      0.008,
+      1.0,
+      -0.006
+    ],
+    [
+      -0.113,
+      -0.072,
+      -0.037,
+      -0.005,
+      -0.557,
+      0.101,
+      0.318,
+      0.181,
+      0.379,
+      0.158,
+      0.387,
+      0.001,
+      -0.006,
+      1.0
+    ]
+  ],
+  "spearman_matrix": [
+    [
+      1.0,
+      -0.009,
+      0.221,
+      0.003,
+      0.136,
+      -0.051,
+      -0.079,
+      -0.054,
+      -0.102,
+      -0.037,
+      -0.096,
+      -0.001,
+      -0.0,
+      -0.116
+    ],
+    [
+      -0.009,
+      1.0,
+      0.015,
+      -0.005,
+      0.089,
+      0.352,
+      -0.059,
+      -0.043,
+      -0.071,
+      -0.024,
+      -0.065,
+      0.008,
+      -0.005,
+      -0.079
+    ],
+    [
+      0.221,
+      0.015,
+      1.0,
+      -0.003,
+      0.05,
+      -0.008,
+      -0.033,
+      -0.035,
+      -0.038,
+      -0.029,
+      -0.039,
+      -0.004,
+      0.013,
+      -0.043
+    ],
+    [
+      0.003,
+      -0.005,
+      -0.003,
+      1.0,
+      -0.003,
+      -0.003,
+      0.003,
+      0.002,
+      -0.006,
+      -0.013,
+      -0.002,
+      0.002,
+      -0.004,
+      -0.006
+    ],
+    [
+      0.136,
+      0.089,
+      0.05,
+      -0.003,
+      1.0,
+      -0.15,
+      -0.378,
+      -0.282,
+      -0.473,
+      -0.164,
+      -0.455,
+      0.001,
+      0.004,
+      -0.549
+    ],
+    [
+      -0.051,
+      0.352,
+      -0.008,
+      -0.003,
+      -0.15,
+      1.0,
+      0.089,
+      0.063,
+      0.103,
+      0.057,
+      0.105,
+      -0.003,
+      -0.001,
+      0.119
+    ],
+    [
+      -0.079,
+      -0.059,
+      -0.033,
+      0.003,
+      -0.378,
+      0.089,
+      1.0,
+      0.161,
+      0.282,
+      0.072,
+      0.27,
+      0.0,
+      -0.011,
+      0.321
+    ],
+    [
+      -0.054,
+      -0.043,
+      -0.035,
+      0.002,
+      -0.282,
+      0.063,
+      0.161,
+      1.0,
+      0.198,
+      0.112,
+      0.198,
+      -0.001,
+      -0.001,
+      0.233
+    ],
+    [
+      -0.102,
+      -0.071,
+      -0.038,
+      -0.006,
+      -0.473,
+      0.103,
+      0.282,
+      0.198,
+      1.0,
+      0.122,
+      0.332,
+      0.0,
+      -0.01,
+      0.397
+    ],
+    [
+      -0.037,
+      -0.024,
+      -0.029,
+      -0.013,
+      -0.164,
+      0.057,
+      0.072,
+      0.112,
+      0.122,
+      1.0,
+      0.124,
+      0.024,
+      0.015,
+      0.109
+    ],
+    [
+      -0.096,
+      -0.065,
+      -0.039,
+      -0.002,
+      -0.455,
+      0.105,
+      0.27,
+      0.198,
+      0.332,
+      0.124,
+      1.0,
+      0.0,
+      0.003,
+      0.378
+    ],
+    [
+      -0.001,
+      0.008,
+      -0.004,
+      0.002,
+      0.001,
+      -0.003,
+      0.0,
+      -0.001,
+      0.0,
+      0.024,
+      0.0,
+      1.0,
+      0.007,
+      -0.003
+    ],
+    [
+      -0.0,
+      -0.005,
+      0.013,
+      -0.004,
+      0.004,
+      -0.001,
+      -0.011,
+      -0.001,
+      -0.01,
+      0.015,
+      0.003,
+      0.007,
+      1.0,
+      -0.007
+    ],
+    [
+      -0.116,
+      -0.079,
+      -0.043,
+      -0.006,
+      -0.549,
+      0.119,
+      0.321,
+      0.233,
+      0.397,
+      0.109,
+      0.378,
+      -0.003,
+      -0.007,
+      1.0
+    ]
+  ],
+  "matrix_cols": [
+    "edad",
+    "ingreso_declarado",
+    "antiguedad_laboral_meses",
+    "antiguedad_cliente_meses",
+    "score_buro",
+    "deuda_sistema",
+    "num_creditos_vigentes",
+    "peor_morosidad_12m",
+    "num_consultas_buro_3m",
+    "num_contactos_ult_trimestre",
+    "uso_linea_credito_pct",
+    "monto_solicitado",
+    "plazo_meses",
+    "tasa_interes_anual"
+  ],
+  "high_corr_pairs": [
+    {
+      "a": "score_buro",
+      "b": "tasa_interes_anual",
+      "pearson": -0.557,
+      "spearman": -0.549
+    },
+    {
+      "a": "score_buro",
+      "b": "num_consultas_buro_3m",
+      "pearson": -0.458,
+      "spearman": -0.473
+    },
+    {
+      "a": "score_buro",
+      "b": "uso_linea_credito_pct",
+      "pearson": -0.471,
+      "spearman": -0.455
+    },
+    {
+      "a": "num_consultas_buro_3m",
+      "b": "tasa_interes_anual",
+      "pearson": 0.379,
+      "spearman": 0.397
+    },
+    {
+      "a": "uso_linea_credito_pct",
+      "b": "tasa_interes_anual",
+      "pearson": 0.387,
+      "spearman": 0.378
+    },
+    {
+      "a": "score_buro",
+      "b": "num_creditos_vigentes",
+      "pearson": -0.38,
+      "spearman": -0.378
+    },
+    {
+      "a": "ingreso_declarado",
+      "b": "deuda_sistema",
+      "pearson": 0.291,
+      "spearman": 0.352
+    }
+  ],
+  "target_corr": [
+    {
+      "col": "num_contactos_ult_trimestre",
+      "pearson_r": 0.7349033924487227,
+      "pearson_p": 0.0,
+      "spearman_r": 0.5161240880647207,
+      "spearman_p": 0.0
+    },
+    {
+      "col": "score_buro",
+      "pearson_r": -0.34104210594067,
+      "pearson_p": 0.0,
+      "spearman_r": -0.32408603715207546,
+      "spearman_p": 0.0
+    },
+    {
+      "col": "num_consultas_buro_3m",
+      "pearson_r": 0.2583083288401632,
+      "pearson_p": 0.0,
+      "spearman_r": 0.23709986151536638,
+      "spearman_p": 0.0
+    },
+    {
+      "col": "uso_linea_credito_pct",
+      "pearson_r": 0.25344994149094957,
+      "pearson_p": 0.0,
+      "spearman_r": 0.24212071170131252,
+      "spearman_p": 0.0
+    },
+    {
+      "col": "tasa_interes_anual",
+      "pearson_r": 0.21518152789680464,
+      "pearson_p": 0.0,
+      "spearman_r": 0.213033442216449,
+      "spearman_p": 0.0
+    },
+    {
+      "col": "peor_morosidad_12m",
+      "pearson_r": 0.1747132341653918,
+      "pearson_p": 2.5231694250257183e-307,
+      "spearman_r": 0.21575780610063267,
+      "spearman_p": 0.0
+    },
+    {
+      "col": "num_creditos_vigentes",
+      "pearson_r": 0.16322841866295532,
+      "pearson_p": 5.390192523971052e-268,
+      "spearman_r": 0.15264962644078692,
+      "spearman_p": 2.962934881167626e-234
+    },
+    {
+      "col": "deuda_sistema",
+      "pearson_r": 0.10460086090691943,
+      "pearson_p": 2.176244268692315e-110,
+      "spearman_r": 0.11131416280156631,
+      "spearman_p": 7.668312115154613e-125
+    },
+    {
+      "col": "edad",
+      "pearson_r": -0.06740266490269459,
+      "pearson_p": 8.988351894498315e-47,
+      "spearman_r": -0.07028818778913005,
+      "spearman_p": 1.0208114593910307e-50
+    },
+    {
+      "col": "monto_solicitado",
+      "pearson_r": 0.048381840896843595,
+      "pearson_p": 6.812579505192087e-25,
+      "spearman_r": 0.05326898775833512,
+      "spearman_p": 7.816328164809993e-30
+    },
+    {
+      "col": "antiguedad_laboral_meses",
+      "pearson_r": -0.04807930846520886,
+      "pearson_p": 6.7557204807287374e-21,
+      "spearman_r": -0.055027557622798026,
+      "spearman_p": 7.000161917110203e-27
+    },
+    {
+      "col": "plazo_meses",
+      "pearson_r": 0.044916226862247215,
+      "pearson_p": 1.1280897438207638e-21,
+      "spearman_r": 0.04225976726846403,
+      "spearman_p": 2.2933508772320078e-19
+    },
+    {
+      "col": "ingreso_declarado",
+      "pearson_r": -0.036236078640643474,
+      "pearson_p": 2.9277625739472502e-12,
+      "spearman_r": -0.04017391775958397,
+      "spearman_p": 9.911585255629722e-15
+    },
+    {
+      "col": "antiguedad_cliente_meses",
+      "pearson_r": -0.02058346235304642,
+      "pearson_p": 1.1798115303708089e-05,
+      "spearman_r": -0.020600885833683885,
+      "spearman_p": 1.1598846311139788e-05
+    }
+  ],
+  "vif": [
+    {
+      "col": "score_buro",
+      "vif": 1.883264090494341
+    },
+    {
+      "col": "tasa_interes_anual",
+      "vif": 1.5521975058585609
+    },
+    {
+      "col": "uso_linea_credito_pct",
+      "vif": 1.3631580590121202
+    },
+    {
+      "col": "num_consultas_buro_3m",
+      "vif": 1.3417969163935672
+    },
+    {
+      "col": "num_creditos_vigentes",
+      "vif": 1.2136738878111992
+    },
+    {
+      "col": "num_contactos_ult_trimestre",
+      "vif": 1.0902014924362564
+    },
+    {
+      "col": "peor_morosidad_12m",
+      "vif": 1.067541850090057
+    },
+    {
+      "col": "edad",
+      "vif": 1.0507751816601323
+    },
+    {
+      "col": "deuda_sistema",
+      "vif": 1.0403139874764762
+    },
+    {
+      "col": "antiguedad_laboral_meses",
+      "vif": 1.0301728528088994
+    },
+    {
+      "col": "ingreso_declarado",
+      "vif": 1.0068815926895525
+    },
+    {
+      "col": "plazo_meses",
+      "vif": 1.0017561054905855
+    },
+    {
+      "col": "monto_solicitado",
+      "vif": 1.0014672456176104
+    },
+    {
+      "col": "antiguedad_cliente_meses",
+      "vif": 1.0004493613790912
+    }
+  ],
+  "levene": [
+    {
+      "col": "deuda_sistema",
+      "stat": 272.9456250052167,
+      "p": 3.9092133759693455e-61,
+      "var0": 7905233677900.388,
+      "var1": 17579977617408.2,
+      "ratio": 2.223840348521791
+    },
+    {
+      "col": "tasa_interes_anual",
+      "stat": 82.24323868938998,
+      "p": 1.2501239631117152e-19,
+      "var0": 4.88197359452908,
+      "var1": 4.048642254476548,
+      "ratio": 0.8293044147173608
+    },
+    {
+      "col": "score_buro",
+      "stat": 73.12346931611899,
+      "p": 1.2553184591714632e-17,
+      "var0": 8077.528437878285,
+      "var1": 6732.841877514197,
+      "ratio": 0.833527474312762
+    },
+    {
+      "col": "monto_solicitado",
+      "stat": 37.394304602221986,
+      "p": 9.729044658385444e-10,
+      "var0": 1737027251860.7673,
+      "var1": 2159767565293.6482,
+      "ratio": 1.2433699949036643
+    },
+    {
+      "col": "ingreso_declarado",
+      "stat": 29.557937399137256,
+      "p": 5.461174636927443e-08,
+      "var0": 306483003765.11975,
+      "var1": 253038174963.8776,
+      "ratio": 0.8256189473978113
+    },
+    {
+      "col": "uso_linea_credito_pct",
+      "stat": 20.850592298293424,
+      "p": 4.978436982252394e-06,
+      "var0": 546.3695757853624,
+      "var1": 487.87094020992447,
+      "ratio": 0.8929321137778383
+    },
+    {
+      "col": "edad",
+      "stat": 0.3941786875945412,
+      "p": 0.5301142087961166,
+      "var0": 150.3982545530668,
+      "var1": 154.2017107502068,
+      "ratio": 1.025289230971746
+    }
+  ],
+  "breusch_pagan": {
+    "lm_stat": 6536.466497079611,
+    "lm_p": 0.0,
+    "f_stat": 1272.9153334706627,
+    "f_p": 0.0,
+    "vars": [
+      "score_buro",
+      "peor_morosidad_12m",
+      "uso_linea_credito_pct",
+      "num_consultas_buro_3m",
+      "tasa_interes_anual",
+      "edad"
+    ]
+  },
+  "anova": [
+    {
+      "group": "tipo_empleo",
+      "numeric": "ingreso_declarado",
+      "f_stat": 728.8976079854261,
+      "p": 0.0,
+      "levene_p": 1.8353642526308556e-242,
+      "eta_sq": 0.05567263927026199
+    },
+    {
+      "group": "canal",
+      "numeric": "score_buro",
+      "f_stat": 586.4131155614047,
+      "p": 3.674654642543011e-252,
+      "levene_p": 0.3086584192941076,
+      "eta_sq": 0.025238446670526212
+    },
+    {
+      "group": "tipo_empleo",
+      "numeric": "score_buro",
+      "f_stat": 347.48138350347006,
+      "p": 4.05569122742881e-223,
+      "levene_p": 0.24960485646934505,
+      "eta_sq": 0.022496313150361335
+    },
+    {
+      "group": "canal",
+      "numeric": "tasa_interes_anual",
+      "f_stat": 408.53526317736896,
+      "p": 1.43417475750163e-176,
+      "levene_p": 0.1604545235699553,
+      "eta_sq": 0.017718464603721635
+    },
+    {
+      "group": "tipo_empleo",
+      "numeric": "tasa_interes_anual",
+      "f_stat": 259.1659211074752,
+      "p": 8.816075515009988e-167,
+      "levene_p": 0.07141733927649171,
+      "eta_sq": 0.016875162535225658
+    },
+    {
+      "group": "tipo_empleo",
+      "numeric": "deuda_sistema",
+      "f_stat": 207.76048962098298,
+      "p": 7.514308316334529e-134,
+      "levene_p": 9.403445940265392e-73,
+      "eta_sq": 0.013573415108543997
+    },
+    {
+      "group": "canal",
+      "numeric": "uso_linea_credito_pct",
+      "f_stat": 303.07483766325595,
+      "p": 1.7748625790064272e-131,
+      "levene_p": 0.9054108067860289,
+      "eta_sq": 0.013204969149477006
+    },
+    {
+      "group": "tipo_empleo",
+      "numeric": "uso_linea_credito_pct",
+      "f_stat": 198.6143292108898,
+      "p": 5.563507788734206e-128,
+      "levene_p": 0.14253783077957605,
+      "eta_sq": 0.012983636063455654
+    },
+    {
+      "group": "canal",
+      "numeric": "ingreso_declarado",
+      "f_stat": 22.93783668030453,
+      "p": 1.1075910277789863e-10,
+      "levene_p": 3.373372161400258e-07,
+      "eta_sq": 0.0012352799541928575
+    },
+    {
+      "group": "canal",
+      "numeric": "deuda_sistema",
+      "f_stat": 11.223436457448916,
+      "p": 1.3394632435866424e-05,
+      "levene_p": 0.0011833304890365775,
+      "eta_sq": 0.0004953033292273721
+    }
+  ],
+  "chi2": [
+    {
+      "col": "num_contactos_ult_trimestre",
+      "chi2": 29131.20754045291,
+      "p": 0.0,
+      "dof": 12,
+      "cramers_v": 0.8019183338333358
+    },
+    {
+      "col": "num_consultas_buro_3m",
+      "chi2": 3041.390537408131,
+      "p": 0.0,
+      "dof": 10,
+      "cramers_v": 0.2591116824082704
+    },
+    {
+      "col": "peor_morosidad_12m",
+      "chi2": 2125.492725509723,
+      "p": 0.0,
+      "dof": 4,
+      "cramers_v": 0.21661110132343214
+    },
+    {
+      "col": "num_creditos_vigentes",
+      "chi2": 1246.172107884322,
+      "p": 1.577387504056221e-261,
+      "dof": 10,
+      "cramers_v": 0.16585933213069906
+    },
+    {
+      "col": "tipo_empleo",
+      "chi2": 404.903858041307,
+      "p": 1.9183552537017836e-87,
+      "dof": 3,
+      "cramers_v": 0.09454245084589981
+    },
+    {
+      "col": "canal",
+      "chi2": 321.9324371958775,
+      "p": 1.2395369861799004e-70,
+      "dof": 2,
+      "cramers_v": 0.08430110508047799
+    },
+    {
+      "col": "plazo_meses",
+      "chi2": 93.83121977387202,
+      "p": 1.0518632798606003e-18,
+      "dof": 5,
+      "cramers_v": 0.04551185949652697
+    },
+    {
+      "col": "region",
+      "chi2": 13.174427806741452,
+      "p": 0.5888271988410966,
+      "dof": 15,
+      "cramers_v": 0.017053627792917546
+    },
+    {
+      "col": "dia_semana_solicitud",
+      "chi2": 6.49483139111528,
+      "p": 0.3700961356396926,
+      "dof": 6,
+      "cramers_v": 0.011973878293738971
+    }
+  ],
+  "iv": [
+    {
+      "col": "num_contactos_ult_trimestre",
+      "iv": 4.519165714088163,
+      "tipo": "numerica"
+    },
+    {
+      "col": "score_buro",
+      "iv": 1.5035367848897758,
+      "tipo": "numerica"
+    },
+    {
+      "col": "uso_linea_credito_pct",
+      "iv": 0.7958701081424466,
+      "tipo": "numerica"
+    },
+    {
+      "col": "tasa_interes_anual",
+      "iv": 0.5698606256817951,
+      "tipo": "numerica"
+    },
+    {
+      "col": "num_consultas_buro_3m",
+      "iv": 0.5236857925584885,
+      "tipo": "numerica"
+    },
+    {
+      "col": "num_creditos_vigentes",
+      "iv": 0.24380991223560078,
+      "tipo": "numerica"
+    },
+    {
+      "col": "peor_morosidad_12m",
+      "iv": 0.22083339096143947,
+      "tipo": "numerica"
+    },
+    {
+      "col": "deuda_sistema",
+      "iv": 0.14453652509134385,
+      "tipo": "numerica"
+    },
+    {
+      "col": "tipo_empleo",
+      "iv": 0.08991160860184033,
+      "tipo": "categorica"
+    },
+    {
+      "col": "canal",
+      "iv": 0.08080918524900021,
+      "tipo": "categorica"
+    },
+    {
+      "col": "edad",
+      "iv": 0.05781998028836042,
+      "tipo": "numerica"
+    },
+    {
+      "col": "antiguedad_laboral_meses",
+      "iv": 0.040111300517100046,
+      "tipo": "numerica"
+    },
+    {
+      "col": "monto_solicitado",
+      "iv": 0.034466032334833474,
+      "tipo": "numerica"
+    },
+    {
+      "col": "ingreso_declarado",
+      "iv": 0.030931665173904988,
+      "tipo": "numerica"
+    },
+    {
+      "col": "plazo_meses",
+      "iv": 0.02138756614707818,
+      "tipo": "numerica"
+    },
+    {
+      "col": "antiguedad_cliente_meses",
+      "iv": 0.005898842405578823,
+      "tipo": "numerica"
+    },
+    {
+      "col": "region",
+      "iv": 0.0033016006337908688,
+      "tipo": "categorica"
+    },
+    {
+      "col": "dia_semana_solicitud",
+      "iv": 0.0016177911530108808,
+      "tipo": "categorica"
+    }
+  ],
+  "cross_tipo_canal": [
+    {
+      "tipo_empleo": "dependiente",
+      "canal": "digital",
+      "default_rate": 0.10426627436557558,
+      "n": 10876
+    },
+    {
+      "tipo_empleo": "dependiente",
+      "canal": "partner",
+      "default_rate": 0.06640625,
+      "n": 5888
+    },
+    {
+      "tipo_empleo": "dependiente",
+      "canal": "sucursal",
+      "default_rate": 0.058672041204792295,
+      "n": 8931
+    },
+    {
+      "tipo_empleo": "independiente",
+      "canal": "digital",
+      "default_rate": 0.1344621513944223,
+      "n": 7028
+    },
+    {
+      "tipo_empleo": "independiente",
+      "canal": "partner",
+      "default_rate": 0.09424603174603174,
+      "n": 2016
+    },
+    {
+      "tipo_empleo": "independiente",
+      "canal": "sucursal",
+      "default_rate": 0.08065010732904017,
+      "n": 3261
+    },
+    {
+      "tipo_empleo": "informal",
+      "canal": "digital",
+      "default_rate": 0.17869718309859156,
+      "n": 3408
+    },
+    {
+      "tipo_empleo": "informal",
+      "canal": "partner",
+      "default_rate": 0.14241486068111456,
+      "n": 969
+    },
+    {
+      "tipo_empleo": "informal",
+      "canal": "sucursal",
+      "default_rate": 0.1365606936416185,
+      "n": 1384
+    },
+    {
+      "tipo_empleo": "jubilado",
+      "canal": "digital",
+      "default_rate": 0.08803611738148984,
+      "n": 443
+    },
+    {
+      "tipo_empleo": "jubilado",
+      "canal": "partner",
+      "default_rate": 0.07029478458049887,
+      "n": 441
+    },
+    {
+      "tipo_empleo": "jubilado",
+      "canal": "sucursal",
+      "default_rate": 0.07022900763358779,
+      "n": 655
+    }
+  ],
+  "cross_score_mora": [
+    {
+      "score_bin": "(299.999, 543.0]",
+      "peor_morosidad_12m": 0,
+      "default_rate": 0.21015067406819984,
+      "n": 5044
+    },
+    {
+      "score_bin": "(299.999, 543.0]",
+      "peor_morosidad_12m": 15,
+      "default_rate": 0.3712606837606838,
+      "n": 1872
+    },
+    {
+      "score_bin": "(299.999, 543.0]",
+      "peor_morosidad_12m": 30,
+      "default_rate": 0.39326765188834156,
+      "n": 1218
+    },
+    {
+      "score_bin": "(299.999, 543.0]",
+      "peor_morosidad_12m": 60,
+      "default_rate": 0.444633730834753,
+      "n": 587
+    },
+    {
+      "score_bin": "(299.999, 543.0]",
+      "peor_morosidad_12m": 90,
+      "default_rate": 0.39361702127659576,
+      "n": 376
+    },
+    {
+      "score_bin": "(543.0, 598.0]",
+      "peor_morosidad_12m": 0,
+      "default_rate": 0.08952622405324037,
+      "n": 6311
+    },
+    {
+      "score_bin": "(543.0, 598.0]",
+      "peor_morosidad_12m": 15,
+      "default_rate": 0.14782608695652175,
+      "n": 1265
+    },
+    {
+      "score_bin": "(543.0, 598.0]",
+      "peor_morosidad_12m": 30,
+      "default_rate": 0.1891891891891892,
+      "n": 777
+    },
+    {
+      "score_bin": "(543.0, 598.0]",
+      "peor_morosidad_12m": 60,
+      "default_rate": 0.22048997772828507,
+      "n": 449
+    },
+    {
+      "score_bin": "(543.0, 598.0]",
+      "peor_morosidad_12m": 90,
+      "default_rate": 0.16546762589928057,
+      "n": 278
+    },
+    {
+      "score_bin": "(598.0, 647.0]",
+      "peor_morosidad_12m": 0,
+      "default_rate": 0.04218573046432616,
+      "n": 7064
+    },
+    {
+      "score_bin": "(598.0, 647.0]",
+      "peor_morosidad_12m": 15,
+      "default_rate": 0.09227467811158799,
+      "n": 932
+    },
+    {
+      "score_bin": "(598.0, 647.0]",
+      "peor_morosidad_12m": 30,
+      "default_rate": 0.11229946524064172,
+      "n": 561
+    },
+    {
+      "score_bin": "(598.0, 647.0]",
+      "peor_morosidad_12m": 60,
+      "default_rate": 0.10294117647058823,
+      "n": 340
+    },
+    {
+      "score_bin": "(598.0, 647.0]",
+      "peor_morosidad_12m": 90,
+      "default_rate": 0.08771929824561403,
+      "n": 171
+    },
+    {
+      "score_bin": "(647.0, 704.0]",
+      "peor_morosidad_12m": 0,
+      "default_rate": 0.020491264941547353,
+      "n": 7613
+    },
+    {
+      "score_bin": "(647.0, 704.0]",
+      "peor_morosidad_12m": 15,
+      "default_rate": 0.06149341142020498,
+      "n": 683
+    },
+    {
+      "score_bin": "(647.0, 704.0]",
+      "peor_morosidad_12m": 30,
+      "default_rate": 0.060674157303370786,
+      "n": 445
+    },
+    {
+      "score_bin": "(647.0, 704.0]",
+      "peor_morosidad_12m": 60,
+      "default_rate": 0.05737704918032787,
+      "n": 244
+    },
+    {
+      "score_bin": "(647.0, 704.0]",
+      "peor_morosidad_12m": 90,
+      "default_rate": 0.08088235294117647,
+      "n": 136
+    },
+    {
+      "score_bin": "(704.0, 850.0]",
+      "peor_morosidad_12m": 0,
+      "default_rate": 0.0063071976255256,
+      "n": 8086
+    },
+    {
+      "score_bin": "(704.0, 850.0]",
+      "peor_morosidad_12m": 15,
+      "default_rate": 0.01881720430107527,
+      "n": 372
+    },
+    {
+      "score_bin": "(704.0, 850.0]",
+      "peor_morosidad_12m": 30,
+      "default_rate": 0.004201680672268907,
+      "n": 238
+    },
+    {
+      "score_bin": "(704.0, 850.0]",
+      "peor_morosidad_12m": 60,
+      "default_rate": 0.02142857142857143,
+      "n": 140
+    },
+    {
+      "score_bin": "(704.0, 850.0]",
+      "peor_morosidad_12m": 90,
+      "default_rate": 0.030612244897959183,
+      "n": 98
+    }
+  ]
+}
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('report-data').textContent);
+
+function isDark() {
+  const el = document.documentElement;
+  if (el.dataset.theme === 'dark') return true;
+  if (el.dataset.theme === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function fmt(n, d=2) {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return Number(n).toLocaleString('es-CL', {minimumFractionDigits: d, maximumFractionDigits: d});
+}
+function fmtInt(n) { return Number(n).toLocaleString('es-CL'); }
+function fmtP(p) {
+  if (p === null || p === undefined) return "—";
+  return p < 0.001 ? p.toExponential(2) : p.toFixed(3);
+}
+function sigBadge(p) {
+  return p < 0.05 ? `<span class="sig-yes">sí (p=${fmtP(p)})</span>` : `<span class="sig-no">no (p=${fmtP(p)})</span>`;
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+function lerpColor(c1, c2, t) {
+  return [lerp(c1[0],c2[0],t), lerp(c1[1],c2[1],t), lerp(c1[2],c2[2],t)];
+}
+function rgbStr(c) { return `rgb(${c[0].toFixed(0)},${c[1].toFixed(0)},${c[2].toFixed(0)})`; }
+function textColorFor(c) {
+  const lum = (0.299*c[0] + 0.587*c[1] + 0.114*c[2]) / 255;
+  return lum > 0.55 ? '#0b0b0b' : '#ffffff';
+}
+
+// diverging: red (neg) <-> gray (0) <-> blue (pos)
+function divergingColor(v) {
+  const dark = isDark();
+  const red = dark ? [230,103,103] : [227,73,72];
+  const gray = dark ? [56,56,53] : [225,224,217];
+  const blue = dark ? [57,135,229] : [42,120,214];
+  const t = Math.max(-1, Math.min(1, v));
+  const c = t < 0 ? lerpColor(gray, red, -t) : lerpColor(gray, blue, t);
+  return c;
+}
+// sequential blue: light (low) -> dark (high); for dark theme, near-surface -> bright
+function sequentialColor(t) {
+  const dark = isDark();
+  t = Math.max(0, Math.min(1, t));
+  const lo = dark ? [26,26,25] : [205,226,251];
+  const hi = dark ? [57,135,229] : [13,54,107];
+  return lerpColor(lo, hi, t);
+}
+
+// ================= 1. correlation heatmap =================
+function renderCorrHeatmap() {
+  const cols = DATA.matrix_cols;
+  const labels = cols.map(c => DATA.num_labels[c] || c);
+  const M = DATA.spearman_matrix;
+  const n = cols.length;
+  const el = document.getElementById('corr-heatmap');
+  el.style.gridTemplateColumns = `140px repeat(${n}, minmax(34px, 1fr))`;
+  let html = '<div class="heat-label corner"></div>';
+  labels.forEach(l => html += `<div class="heat-label col" title="${l}">${l}</div>`);
+  for (let i = 0; i < n; i++) {
+    html += `<div class="heat-label" title="${labels[i]}">${labels[i]}</div>`;
+    for (let j = 0; j < n; j++) {
+      const v = M[i][j];
+      const c = divergingColor(v);
+      const tc = textColorFor(c);
+      html += `<div class="heat-cell" style="background:${rgbStr(c)};color:${tc}" title="${labels[i]} × ${labels[j]}: ${v.toFixed(2)}">${v.toFixed(2)}</div>`;
+    }
+  }
+  el.innerHTML = html;
+
+  const legend = document.getElementById('corr-legend');
+  const stops = [-1,-0.5,0,0.5,1];
+  legend.innerHTML = 'Spearman: ' + stops.map(s => {
+    const c = divergingColor(s);
+    return `<span><span class="legend-sw" style="background:${rgbStr(c)}"></span>${s}</span>`;
+  }).join(' ');
+}
+
+function renderPairsTable() {
+  const rows = DATA.high_corr_pairs.map(p => `
+    <tr>
+      <td>${DATA.num_labels[p.a]||p.a} × ${DATA.num_labels[p.b]||p.b}</td>
+      <td>${fmt(p.pearson,3)}</td>
+      <td>${fmt(p.spearman,3)}</td>
+    </tr>`).join('');
+  document.getElementById('pairs-table').innerHTML = `
+    <thead><tr><th>Par de variables</th><th>Pearson</th><th>Spearman</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+// ================= 2. target correlation bar chart =================
+function renderTargetCorrChart() {
+  const items = DATA.target_corr;
+  const maxAbs = Math.max(...items.map(i => Math.abs(i.pearson_r)));
+  let html = '';
+  items.forEach(it => {
+    const label = DATA.num_labels[it.col] || it.col;
+    const pct = (Math.abs(it.pearson_r) / maxAbs) * 100;
+    const color = it.pearson_r >= 0 ? 'var(--series-1)' : 'var(--series-2)';
+    const isLeak = it.col === DATA.leakage_var;
+    html += `<div class="bar-row">
+      <div class="bar-label">${label}${isLeak ? ' <span class=\"tag leak\">posible fuga</span>' : ''}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div></div>
+      <div class="bar-val">r=${fmt(it.pearson_r,3)}</div>
+    </div>`;
+  });
+  document.getElementById('target-corr-chart').innerHTML = html;
+}
+
+// ================= 3. VIF table =================
+function renderVIF() {
+  const rows = DATA.vif.map(v => `
+    <tr>
+      <td>${DATA.num_labels[v.col]||v.col}</td>
+      <td class="${v.vif>5?'sig-yes':''}">${fmt(v.vif,2)}</td>
+    </tr>`).join('');
+  document.getElementById('vif-table').innerHTML = `
+    <thead><tr><th>Variable</th><th>VIF</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+  const maxVif = Math.max(...DATA.vif.map(v=>v.vif));
+  document.getElementById('vif-note').textContent =
+    `VIF máximo observado: ${maxVif.toFixed(2)} (muy por debajo de 5). No hay evidencia de multicolinealidad relevante entre las variables numéricas — se pueden incluir todas simultáneamente en una regresión logística sin inestabilidad de coeficientes por este motivo.`;
+}
+
+// ================= 4. Levene + Breusch-Pagan =================
+function renderLevene() {
+  const rows = DATA.levene.map(l => `
+    <tr>
+      <td>${DATA.num_labels[l.col]||l.col}</td>
+      <td>${sigBadge(l.p)}</td>
+      <td>${fmt(l.ratio,2)}×</td>
+    </tr>`).join('');
+  document.getElementById('levene-table').innerHTML = `
+    <thead><tr><th>Variable</th><th>¿Varianza distinta?</th><th>Var(default=1)/Var(default=0)</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+function renderBP() {
+  const bp = DATA.breusch_pagan;
+  document.getElementById('bp-content').innerHTML = `
+    <div class="note-row ${bp.lm_p<0.05?'crit':'good'}">
+      LM=${fmt(bp.lm_stat,1)}, p=${fmtP(bp.lm_p)} → ${bp.lm_p<0.05?'se rechaza homocedasticidad':'no se rechaza homocedasticidad'}.
+    </div>
+    <div class="note-row">Variables del modelo lineal de prueba: ${bp.vars.map(v=>DATA.num_labels[v]||v).join(', ')}.</div>
+    <div class="note-row dist">Un modelo de probabilidad lineal (OLS) sobre un target binario tiene, por construcción, varianza residual que depende de p̂(1-p̂) — heterocedasticidad esperada. Esto confirma, con evidencia del propio dataset, que un enfoque lineal simple no es adecuado y refuerza la recomendación de usar regresión logística (o un GBM) en vez de un LPM.</div>
+  `;
+}
+
+// ================= 5. ANOVA + Chi2 =================
+function renderAnova() {
+  const rows = DATA.anova.map(a => {
+    const homoc = a.levene_p >= 0.05;
+    const levHtml = homoc
+      ? `<span class="sig-no">sí (p=${fmtP(a.levene_p)})</span>`
+      : `<span class="sig-yes" style="color:var(--warn)">no (p=${fmtP(a.levene_p)})</span>`;
+    return `
+    <tr>
+      <td>${DATA.num_labels[a.numeric]||a.numeric} por ${DATA.cat_labels[a.group]||a.group}</td>
+      <td>${sigBadge(a.p)}</td>
+      <td>${fmt(a.eta_sq,4)}</td>
+      <td>${levHtml}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('anova-table').innerHTML = `
+    <thead><tr><th>Numérica × grupo</th><th>¿Medias distintas? (F-test)</th><th>η²</th><th>¿Varianzas homogéneas? (Levene)</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+  const nViolate = DATA.anova.filter(a => a.levene_p < 0.05).length;
+  document.getElementById('anova-note').textContent =
+    `${nViolate} de ${DATA.anova.length} cruces violan el supuesto de homocedasticidad de ANOVA (Levene p<0,05) — para esos, el F-test clásico puede subestimar/sobreestimar la significancia; lo correcto es re-confirmar con un ANOVA de Welch (no asume varianzas iguales). El caso más extremo es deuda_sistema por tipo_empleo (Levene p=9,4e-73): la dispersión de deuda cambia muchísimo entre tipos de empleo, y su η² (0,014, ya bajo) debería tomarse con más cautela que los demás.`;
+}
+function renderChi2() {
+  const rows = DATA.chi2.map(c => `
+    <tr>
+      <td>${DATA.cat_labels[c.col]||DATA.num_labels[c.col]||c.col}</td>
+      <td>${sigBadge(c.p)}</td>
+      <td>${fmt(c.cramers_v,3)}</td>
+    </tr>`).join('');
+  document.getElementById('chi2-table').innerHTML = `
+    <thead><tr><th>Variable</th><th>¿Asociada al target?</th><th>Cramér's V</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+// ================= 6. IV chart =================
+function renderIV() {
+  const items = DATA.iv;
+  const capped = items.map(i => Math.min(i.iv, 1.2));
+  const maxIv = 1.2;
+  let html = '';
+  items.forEach((it, idx) => {
+    const label = (DATA.num_labels[it.col] || DATA.cat_labels[it.col] || it.col);
+    const val = Math.min(it.iv, maxIv);
+    const pct = (val / maxIv) * 100;
+    let tagHtml = '';
+    if (it.iv > 0.5) tagHtml = '<span class="tag leak">&gt;0,5 revisar</span>';
+    else if (it.iv > 0.1) tagHtml = '<span class="tag strong">fuerte</span>';
+    let color = 'var(--series-1)';
+    if (it.iv > 0.5) color = 'var(--bad)';
+    html += `<div class="bar-row">
+      <div class="bar-label">${label}${tagHtml}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div>
+      </div>
+      <div class="bar-val">IV=${fmt(it.iv,3)}</div>
+    </div>`;
+  });
+  document.getElementById('iv-chart').innerHTML = html;
+}
+
+// ================= 7. cross heatmaps =================
+function renderCrossTC() {
+  const data = DATA.cross_tipo_canal;
+  const tipos = [...new Set(data.map(d=>d.tipo_empleo))];
+  const canales = [...new Set(data.map(d=>d.canal))];
+  const maxRate = Math.max(...data.map(d=>d.default_rate));
+  const el = document.getElementById('cross-tc-heatmap');
+  el.style.gridTemplateColumns = `120px repeat(${canales.length}, minmax(70px,1fr))`;
+  let html = '<div class="heat-label corner"></div>';
+  canales.forEach(c => html += `<div class="heat-label" style="writing-mode:horizontal-tb;justify-content:center;">${c}</div>`);
+  tipos.forEach(t => {
+    html += `<div class="heat-label">${t}</div>`;
+    canales.forEach(c => {
+      const row = data.find(d => d.tipo_empleo===t && d.canal===c);
+      const v = row ? row.default_rate : 0;
+      const col = sequentialColor(v / maxRate);
+      const tc = textColorFor(col);
+      html += `<div class="heat-cell" style="background:${rgbStr(col)};color:${tc}" title="n=${row?fmtInt(row.n):0}">${(v*100).toFixed(1)}%</div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+function renderCrossSM() {
+  const data = DATA.cross_score_mora;
+  const bins = [...new Set(data.map(d=>d.score_bin))];
+  const moras = [...new Set(data.map(d=>d.peor_morosidad_12m))].sort((a,b)=>a-b);
+  const maxRate = Math.max(...data.map(d=>d.default_rate));
+  const el = document.getElementById('cross-sm-heatmap');
+  el.style.gridTemplateColumns = `150px repeat(${moras.length}, minmax(55px,1fr))`;
+  let html = '<div class="heat-label corner"></div>';
+  moras.forEach(m => html += `<div class="heat-label" style="writing-mode:horizontal-tb;justify-content:center;">${m}d</div>`);
+  bins.forEach(b => {
+    html += `<div class="heat-label" title="${b}">${b}</div>`;
+    moras.forEach(m => {
+      const row = data.find(d => d.score_bin===b && d.peor_morosidad_12m===m);
+      const v = row ? row.default_rate : 0;
+      const col = sequentialColor(v / maxRate);
+      const tc = textColorFor(col);
+      html += `<div class="heat-cell" style="background:${rgbStr(col)};color:${tc}" title="n=${row?fmtInt(row.n):0}">${(v*100).toFixed(1)}%</div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+// ================= 8. synthesis =================
+function renderSynthesis() {
+  document.getElementById('synthesis').innerHTML = `
+    <div class="note-row crit"><b>Excluir num_contactos_ult_trimestre del modelo.</b> Triple confirmación de fuga: correlación con el target 0,73 (la más alta del dataset por lejos), Cramér's V 0,80 y un Information Value de 4,52 — más de 9 veces el umbral (0,5) que en riesgo crediticio se usa como alerta de fuga de información. Es prácticamente imposible que una variable de comportamiento explique por sí sola el 80% de la asociación con el target sin estar contaminada con información posterior al desembolso (ej. gestión de cobranza).</div>
+    <div class="note-row extra"><b>tasa_interes_anual: usar con cautela, no como insumo ingenuo.</b> Tiene buen IV (0,57) y correlación relevante con el target, pero es la tasa que la propia empresa asignó por pricing — es decir, ya incorpora una evaluación de riesgo previa (probablemente de otro modelo o de reglas). Usarla puede hacer que el nuevo modelo simplemente re-aprenda la política de pricing existente en lugar de aportar señal independiente. Recomendación: probar el modelo con y sin esta variable, y documentar la diferencia de performance.</div>
+    <div class="note-row good"><b>score_buro, uso_linea_credito_pct y num_consultas_buro_3m son los predictores legítimos más fuertes</b> (IV entre 0,52 y 1,50). A diferencia de num_contactos_ult_trimestre, son variables de buró conocidas al momento de originar el crédito y su alto poder predictivo es esperable — son exactamente el tipo de variables que un score de riesgo debería aprovechar. El cruce score_buro × peor_morosidad_12m muestra un efecto conjunto muy claro y monotónico (0,6% de default en el mejor quintil sin mora previa, hasta 44% en el peor quintil con mora de 60 días) — son complementarias, no redundantes (VIF entre ambas es bajo).</div>
+    <div class="note-row">No hay problema de multicolinealidad (VIF máximo 1,88): todas las variables numéricas pueden entrar juntas a una regresión logística sin inestabilidad de coeficientes. Sí existen correlaciones moderadas esperables (score_buro con tasa_interes_anual, num_consultas_buro_3m y uso_linea_credito_pct, todas en torno a -0,45 a -0,56) que reflejan que el score de buró ya resume gran parte de esas señales — vigilar si aportan poder incremental real o son mayormente redundantes al construir el modelo final (ej. comparando AUC con y sin ellas).</div>
+    <div class="note-row dist">La heterocedasticidad confirmada (Levene significativo en 6 de 7 variables clave, y Breusch-Pagan p≈0 en el modelo lineal de prueba) es evidencia adicional — más allá de que el target es binario — de que un modelo lineal (OLS/LPM) no es apropiado. Regresión logística o GBM son las opciones correctas; si se usa logística, preferir binning/WOE (que no asume varianzas iguales) por sobre estandarización z-score cruda.</div>
+    <div class="note-row extra"><b>canal y tipo_empleo son predictores categóricos genuinos</b> (Cramér's V 0,08–0,10, ANOVA significativo contra score_buro/ingreso/tasa). El cruce tipo_empleo × canal muestra un patrón consistente y sin interacción fuerte: canal digital es más riesgoso que sucursal/partner dentro de cada tipo de empleo, e informal es más riesgoso que el resto dentro de cada canal (rango 7,0% a 17,9% de default) — son efectos aditivos, buenos candidatos para dummies/WOE simples, no requieren términos de interacción explícitos en un modelo lineal.</div>
+    <div class="note-row">region y dia_semana_solicitud no muestran asociación significativa con el target (Chi² p=0,59 y p=0,37, IV≈0). Para dia_semana_solicitud esto es consistente con el hallazgo anterior de que el campo no es confiable (85,7% no coincide con la fecha real) — un motivo adicional para excluirlo. region puede excluirse o dejarse solo como control, sin impacto esperado en performance.</div>
+    <div class="note-row extra">Recordar los hallazgos de calidad de datos ya documentados (nulos estructurales en antiguedad_laboral_meses ligados a tipo_empleo, inconsistencias en ingreso_declarado y edad, top-coding de score_buro en 850) al construir el pipeline de features — varias de esas correcciones deberían aplicarse antes de calcular WOE/IV en el modelo final, no solo en el EDA.</div>
+  `;
+}
+
+renderCorrHeatmap();
+renderPairsTable();
+renderTargetCorrChart();
+renderVIF();
+renderLevene();
+renderBP();
+renderAnova();
+renderChi2();
+renderIV();
+renderCrossTC();
+renderCrossSM();
+renderSynthesis();
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  renderCorrHeatmap(); renderCrossTC(); renderCrossSM();
+});
+
+document.getElementById('footer-note').textContent =
+  "Metodología: Pearson/Spearman (scipy), VIF (statsmodels), Levene y Breusch-Pagan (statsmodels/scipy) para heterocedasticidad, ANOVA de un factor con eta-cuadrado como tamaño de efecto, Chi-cuadrado de independencia con Cramér's V, e Information Value/WOE con binning en 10 cuantiles para numéricas. " +
+  "Tratamiento de nulos e inconsistencias: ninguna de las inconsistencias documentadas en el EDA univariado (edad>100, ingreso_declarado<100.000, top-coding de score_buro en 850, etc.) fue corregida aquí — todos los cálculos usan los valores crudos de train.csv, a propósito, para diagnosticar señal y riesgos antes de definir el pipeline de limpieza. Los nulos de ingreso_declarado (18,1%) y antiguedad_laboral_meses (16,1%) se excluyeron por pares (dropna) en correlación, IV, ANOVA, Chi², Levene y Breusch-Pagan; la única imputación real de todo el reporte es en VIF (mediana + log1p en variables monetarias), necesaria porque ese cálculo requiere una matriz sin nulos. Recomendación: repetir este análisis después de aplicar la limpieza para confirmar que las conclusiones no cambian.";
+</script>

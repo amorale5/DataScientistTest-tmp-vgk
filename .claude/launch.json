@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "scratchpad-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8743", "--directory", "/private/tmp/claude-501/-Users-onlive-Library-CloudStorage-GoogleDrive-amatias-morales25-gmail-com-Mi-unidad-respaldo-matias-agm-Trabajos-Personales-postulacion-bice-DataScientistTest/6ff6d5e5-81af-43c5-b161-623cfd005dcd/scratchpad"],
+      "port": 8743
+    }
+  ]
+}

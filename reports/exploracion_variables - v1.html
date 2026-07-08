@@ -1,0 +1,1729 @@
+<meta charset="utf-8">
+<title>Exploración numérica y categórica — train.csv</title>
+<style>
+.viz-root {
+  --surface-1:      #fcfcfb;
+  --page-plane:     #f9f9f7;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #898781;
+  --gridline:       #e1e0d9;
+  --baseline:       #c3c2b7;
+  --series-1:       #2a78d6;
+  --series-1-soft:  #cde2fb;
+  --border:         rgba(11,11,11,0.10);
+  --bad:            #d03b3b;
+  --warn:           #eda100;
+}
+@media (prefers-color-scheme: dark) {
+  .viz-root {
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --series-1:       #3987e5;
+    --series-1-soft:  #184f95;
+    --border:         rgba(255,255,255,0.10);
+    --bad:            #e66767;
+    --warn:           #c98500;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  --surface-1:      #1a1a19;
+  --page-plane:     #0d0d0d;
+  --text-primary:   #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted:     #898781;
+  --gridline:       #2c2c2a;
+  --baseline:       #383835;
+  --series-1:       #3987e5;
+  --series-1-soft:  #184f95;
+  --border:         rgba(255,255,255,0.10);
+  --bad:            #e66767;
+  --warn:           #c98500;
+}
+:root[data-theme="light"] .viz-root {
+  --surface-1:      #fcfcfb;
+  --page-plane:     #f9f9f7;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #898781;
+  --gridline:       #e1e0d9;
+  --baseline:       #c3c2b7;
+  --series-1:       #2a78d6;
+  --series-1-soft:  #cde2fb;
+  --border:         rgba(11,11,11,0.10);
+  --bad:            #d03b3b;
+  --warn:           #eda100;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+.viz-root {
+  background: var(--page-plane);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: 24px 16px 64px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin: 0 0 4px; }
+.subtitle { color: var(--text-secondary); font-size: 0.92rem; margin: 0 0 24px; }
+h2 { font-size: 1.15rem; margin: 40px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+  gap: 16px;
+}
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px 14px;
+}
+.card h3 { margin: 0 0 2px; font-size: 1rem; }
+.card .unit { color: var(--text-muted); font-size: 0.8rem; margin: 0 0 12px; }
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px 10px;
+  margin-bottom: 10px;
+}
+.stat {
+  background: var(--page-plane);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.stat .lbl { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .02em; }
+.stat .val { font-size: 0.92rem; font-variant-numeric: tabular-nums; font-weight: 600; }
+.stat .val.warn { color: var(--bad); }
+.note-row {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--page-plane);
+  border-radius: 6px;
+  padding: 7px 9px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.note-row b { color: var(--text-primary); }
+.note-row.crit { border-left: 3px solid var(--bad); }
+.note-row.extra { border-left: 3px solid var(--warn); }
+.note-row.dist { border-left: 3px solid var(--series-1); }
+.chart-box { position: relative; margin-top: 8px; }
+svg.hist { width: 100%; height: 150px; display: block; overflow: visible; }
+.bar { fill: var(--series-1); }
+.bar:hover { fill: var(--series-1); opacity: 0.75; }
+.axis-line { stroke: var(--baseline); stroke-width: 1; }
+.grid-line { stroke: var(--gridline); stroke-width: 1; }
+.axis-label { fill: var(--text-muted); font-size: 9.5px; font-family: system-ui, sans-serif; }
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--text-primary);
+  color: var(--surface-1);
+  font-size: 0.72rem;
+  padding: 5px 8px;
+  border-radius: 5px;
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.08s;
+}
+.tooltip.show { opacity: 1; }
+
+.catbar-row { display: grid; grid-template-columns: 130px 1fr 68px; align-items: center; gap: 8px; margin: 5px 0; }
+.catbar-label { font-size: 0.82rem; color: var(--text-secondary); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.catbar-track { background: var(--page-plane); border-radius: 4px; height: 16px; position: relative; }
+.catbar-fill { background: var(--series-1); height: 100%; border-radius: 4px; }
+.catbar-val { font-size: 0.78rem; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+
+.footer-note { color: var(--text-muted); font-size: 0.76rem; margin-top: 28px; line-height: 1.5; }
+</style>
+
+<div class="viz-root">
+  <div class="wrap">
+    <h1>Exploración de variables — data/train.csv</h1>
+    <p class="subtitle">45.300 solicitudes. Histogramas restringidos al rango (0, p99]. Todas las cifras de nulos/ceros/inconsistencias son % sobre el total de filas (45.300).</p>
+
+    <h2>Variables numéricas</h2>
+    <div class="grid" id="numeric-grid"></div>
+
+    <h2>Variables categóricas</h2>
+    <div class="grid" id="cat-grid"></div>
+
+    <p class="footer-note" id="footer-note"></p>
+  </div>
+  <div class="tooltip" id="tooltip"></div>
+</div>
+
+<script id="report-data" type="application/json">
+{
+  "numeric": [
+    {
+      "col": "edad",
+      "criterio_inconsistencia": "Edad debe estar en un rango adulto plausible: <18 (no puede solicitar cr\u00e9dito) o >100 a\u00f1os (error de captura probable).",
+      "n_total": 45300,
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_zeros": 0,
+      "pct_zeros": 0.0,
+      "q99": 70.0,
+      "n_above_q99": 381,
+      "pct_above_q99": 0.84,
+      "range_above_q99": [
+        70.0,
+        133.0
+      ],
+      "mean": 39.906799116997796,
+      "median": 40.0,
+      "std": 12.306937298286634,
+      "skew": 0.5779320479887032,
+      "kurtosis": 1.8028624628761394,
+      "n_incons": 70,
+      "pct_incons": 0.1545,
+      "normaltest_stat": 4048.7910177137164,
+      "normaltest_p": 0.0,
+      "ks_norm_stat": 0.04468016718789561,
+      "ks_norm_p": 5.062084542844947e-79,
+      "lognorm_ks_stat": 0.06547216407726214,
+      "lognorm_ks_p": 2.86075369795634e-169,
+      "dispersion_index": null,
+      "interpretacion_dist": "D'Agostino-Pearson: p=0.00e+00 \u2192 se rechaza normalidad. KS vs lognormal: p=2.86e-169 \u2192 tampoco se ajusta a una lognormal, aunque skew=0.58 confirma fuerte asimetr\u00eda positiva.",
+      "notas_extra": [],
+      "hist_counts": [
+        2761,
+        1035,
+        1324,
+        753,
+        1704,
+        2029,
+        1087,
+        2316,
+        2534,
+        1376,
+        2808,
+        2911,
+        2896,
+        1377,
+        2752,
+        2633,
+        1185,
+        2168,
+        1922,
+        858,
+        1532,
+        1318,
+        1043,
+        390,
+        708,
+        528,
+        214,
+        356,
+        237,
+        164
+      ],
+      "hist_edges": [
+        19.0,
+        20.7,
+        22.4,
+        24.1,
+        25.8,
+        27.5,
+        29.2,
+        30.9,
+        32.6,
+        34.3,
+        36.0,
+        37.7,
+        39.4,
+        41.099999999999994,
+        42.8,
+        44.5,
+        46.2,
+        47.9,
+        49.599999999999994,
+        51.3,
+        53.0,
+        54.699999999999996,
+        56.4,
+        58.1,
+        59.8,
+        61.5,
+        63.199999999999996,
+        64.9,
+        66.6,
+        68.3,
+        70.0
+      ],
+      "hist_n": 44919
+    },
+    {
+      "col": "ingreso_declarado",
+      "criterio_inconsistencia": "Ingreso mensual < 100.000 CLP: por debajo del sueldo m\u00ednimo legal (~460.000-500.000 CLP en 2024-2025) y separado del resto de la distribuci\u00f3n por un vac\u00edo total entre ~5.800 y ~268.000 (probable error de unidades, ej. registrado en miles).",
+      "n_total": 45300,
+      "n_null": 8205,
+      "pct_null": 18.11,
+      "n_zeros": 0,
+      "pct_zeros": 0.0,
+      "q99": 2463000.0,
+      "n_above_q99": 369,
+      "pct_above_q99": 0.81,
+      "range_above_q99": [
+        2463000.0,
+        6777000.0
+      ],
+      "mean": 831653.9051624208,
+      "median": 776000.0,
+      "std": 549629.229203192,
+      "skew": 0.9769871591576336,
+      "kurtosis": 2.8782835577834565,
+      "n_incons": 4573,
+      "pct_incons": 10.0949,
+      "normaltest_stat": 6751.2560513337685,
+      "normaltest_p": 0.0,
+      "ks_norm_stat": 0.06518955274626015,
+      "ks_norm_p": 1.6881990557625107e-137,
+      "lognorm_ks_stat": 0.33790628848038196,
+      "lognorm_ks_p": 0.0,
+      "dispersion_index": null,
+      "interpretacion_dist": "D'Agostino-Pearson: p=0.00e+00 \u2192 se rechaza normalidad. KS vs lognormal: p=0.00e+00 \u2192 tampoco se ajusta a una lognormal, aunque skew=0.98 confirma fuerte asimetr\u00eda positiva.",
+      "notas_extra": [],
+      "hist_counts": [
+        4573,
+        0,
+        0,
+        1031,
+        1388,
+        1990,
+        2531,
+        2875,
+        2898,
+        2694,
+        2546,
+        2274,
+        1974,
+        1734,
+        1419,
+        1212,
+        1078,
+        824,
+        774,
+        569,
+        476,
+        393,
+        315,
+        260,
+        228,
+        190,
+        139,
+        126,
+        113,
+        102
+      ],
+      "hist_edges": [
+        280.0,
+        82370.66666666667,
+        164461.33333333334,
+        246552.0,
+        328642.6666666667,
+        410733.3333333334,
+        492824.0,
+        574914.6666666667,
+        657005.3333333334,
+        739096.0,
+        821186.6666666667,
+        903277.3333333334,
+        985368.0,
+        1067458.6666666667,
+        1149549.3333333335,
+        1231640.0,
+        1313730.6666666667,
+        1395821.3333333335,
+        1477912.0,
+        1560002.6666666667,
+        1642093.3333333335,
+        1724184.0,
+        1806274.6666666667,
+        1888365.3333333335,
+        1970456.0,
+        2052546.6666666667,
+        2134637.3333333335,
+        2216728.0,
+        2298818.666666667,
+        2380909.3333333335,
+        2463000.0
+      ],
+      "hist_n": 36726
+    },
+    {
+      "col": "antiguedad_laboral_meses",
+      "criterio_inconsistencia": "Antig\u00fcedad laboral que implica haber comenzado a trabajar antes de los 14 a\u00f1os (antiguedad_laboral_meses/12 > edad-14).",
+      "n_total": 45300,
+      "n_null": 7300,
+      "pct_null": 16.11,
+      "n_zeros": 0,
+      "pct_zeros": 0.0,
+      "q99": 232.0,
+      "n_above_q99": 375,
+      "pct_above_q99": 0.83,
+      "range_above_q99": [
+        232.0,
+        936.0
+      ],
+      "mean": 70.22734210526316,
+      "median": 59.0,
+      "std": 53.053803300740675,
+      "skew": 2.561275366721053,
+      "kurtosis": 19.72547499438557,
+      "n_incons": 46,
+      "pct_incons": 0.1015,
+      "normaltest_stat": 23812.768318302726,
+      "normaltest_p": 0.0,
+      "ks_norm_stat": 0.10792172610816027,
+      "ks_norm_p": 0.0,
+      "lognorm_ks_stat": 0.06288124055441058,
+      "lognorm_ks_p": 4.568305803553591e-131,
+      "dispersion_index": null,
+      "interpretacion_dist": "D'Agostino-Pearson: p=0.00e+00 \u2192 se rechaza normalidad. KS vs lognormal: p=4.57e-131 \u2192 tampoco se ajusta a una lognormal, aunque skew=2.56 confirma fuerte asimetr\u00eda positiva.",
+      "notas_extra": [
+        "Los nulos NO son aleatorios: coinciden 100% con tipo_empleo ('informal' y 'jubilado' tienen el campo siempre nulo; 'dependiente' e 'independiente' nunca lo tienen nulo). Es decir, el campo no aplica por dise\u00f1o para quienes no tienen un empleador formal actual, no es un error de captura. Esto sugiere que el 'riesgo' que antes le atribuimos a los nulos de esta variable en realidad es el efecto de tipo_empleo actuando como proxy."
+      ],
+      "hist_counts": [
+        620,
+        3562,
+        2508,
+        2261,
+        3104,
+        2797,
+        2661,
+        2733,
+        2174,
+        2145,
+        1990,
+        1592,
+        1565,
+        1228,
+        1026,
+        1028,
+        668,
+        751,
+        633,
+        374,
+        477,
+        390,
+        262,
+        283,
+        216,
+        148,
+        143,
+        119,
+        92,
+        75
+      ],
+      "hist_edges": [
+        1.0,
+        8.7,
+        16.4,
+        24.1,
+        31.8,
+        39.5,
+        47.2,
+        54.9,
+        62.6,
+        70.3,
+        78.0,
+        85.7,
+        93.4,
+        101.10000000000001,
+        108.8,
+        116.5,
+        124.2,
+        131.9,
+        139.6,
+        147.3,
+        155.0,
+        162.70000000000002,
+        170.4,
+        178.1,
+        185.8,
+        193.5,
+        201.20000000000002,
+        208.9,
+        216.6,
+        224.3,
+        232.0
+      ],
+      "hist_n": 37625
+    },
+    {
+      "col": "antiguedad_cliente_meses",
+      "criterio_inconsistencia": "Antig\u00fcedad como cliente que implica haber sido cliente antes de los 18 a\u00f1os (antiguedad_cliente_meses/12 > edad-18).",
+      "n_total": 45300,
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_zeros": 506,
+      "pct_zeros": 1.12,
+      "q99": 95.0,
+      "n_above_q99": 0,
+      "pct_above_q99": 0.0,
+      "range_above_q99": [
+        95.0,
+        95.0
+      ],
+      "mean": 47.478101545253864,
+      "median": 47.0,
+      "std": 27.73652790003658,
+      "skew": 0.006711161994026935,
+      "kurtosis": -1.203469790058437,
+      "n_incons": 3435,
+      "pct_incons": 7.5828,
+      "normaltest_stat": 41382.275969795344,
+      "normaltest_p": 0.0,
+      "ks_norm_stat": 0.06276070653849986,
+      "ks_norm_p": 1.4561007458622267e-155,
+      "lognorm_ks_stat": null,
+      "lognorm_ks_p": null,
+      "dispersion_index": null,
+      "interpretacion_dist": "D'Agostino-Pearson: p=0.00e+00 \u2192 se rechaza normalidad. skew=0.01, kurtosis=-1.20.",
+      "notas_extra": [],
+      "hist_counts": [
+        1805,
+        1409,
+        1402,
+        1493,
+        1462,
+        1400,
+        1391,
+        1912,
+        1417,
+        1398,
+        1444,
+        1446,
+        1467,
+        1364,
+        1390,
+        1874,
+        1425,
+        1422,
+        1376,
+        1374,
+        1404,
+        1473,
+        1860,
+        1359,
+        1422,
+        1414,
+        1427,
+        1432,
+        1443,
+        1889
+      ],
+      "hist_edges": [
+        1.0,
+        4.133333333333333,
+        7.266666666666667,
+        10.4,
+        13.533333333333333,
+        16.666666666666664,
+        19.8,
+        22.933333333333334,
+        26.066666666666666,
+        29.2,
+        32.33333333333333,
+        35.46666666666667,
+        38.6,
+        41.733333333333334,
+        44.86666666666667,
+        48.0,
+        51.13333333333333,
+        54.266666666666666,
+        57.4,
+        60.53333333333333,
+        63.666666666666664,
+        66.8,
+        69.93333333333334,
+        73.06666666666666,
+        76.2,
+        79.33333333333333,
+        82.46666666666667,
+        85.6,
+        88.73333333333333,
+        91.86666666666666,
+        95.0
+      ],
+      "hist_n": 44794
+    },
+    {
+      "col": "score_buro",
+      "criterio_inconsistencia": "Score fuera del rango documentado en el diccionario de datos (300-850).",
+      "n_total": 45300,
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_zeros": 0,
+      "pct_zeros": 0.0,
+      "q99": 846.010000000002,
+      "n_above_q99": 453,
+      "pct_above_q99": 1.0,
+      "range_above_q99": [
+        846.010000000002,
+        850.0
+      ],
+      "mean": 622.8535540838852,
+      "median": 623.0,
+      "std": 94.81234491050765,
+      "skew": -0.05131174392406462,
+      "kurtosis": -0.1593066349580905,
+      "n_incons": 0,
+      "pct_incons": 0.0,
+      "normaltest_stat": 76.31101893683672,
+      "normaltest_p": 2.6870316606965955e-17,
+      "ks_norm_stat": 0.008293254185521626,
+      "ks_norm_p": 0.003911872481061621,
+      "lognorm_ks_stat": null,
+      "lognorm_ks_p": null,
+      "dispersion_index": null,
+      "interpretacion_dist": "D'Agostino-Pearson: p=2.69e-17 \u2192 se rechaza normalidad. skew=-0.05, kurtosis=-0.16.",
+      "notas_extra": [
+        "Acumulaci\u00f3n an\u00f3mala en el techo de la escala: el valor 850 aparece 422 veces, muy por encima de la densidad de valores vecinos (841-849 tienen 8-16 casos cada uno). Es consistente con top-coding/censura del score en el l\u00edmite superior del proveedor de bur\u00f3 (los que 'califican mejor que 850' quedan todos agrupados en 850), no con que 422 personas tengan un score id\u00e9ntico de forma org\u00e1nica."
+      ],
+      "hist_counts": [
+        35,
+        23,
+        47,
+        86,
+        141,
+        262,
+        351,
+        519,
+        695,
+        978,
+        1322,
+        1711,
+        2031,
+        2526,
+        2842,
+        3295,
+        3289,
+        3322,
+        3403,
+        3134,
+        3107,
+        2705,
+        2295,
+        1898,
+        1450,
+        1233,
+        828,
+        590,
+        422,
+        307
+      ],
+      "hist_edges": [
+        300.0,
+        318.2,
+        336.4,
+        354.6,
+        372.8,
+        391.0,
+        409.2,
+        427.4,
+        445.6,
+        463.79999999999995,
+        482.0,
+        500.2,
+        518.4,
+        536.6,
+        554.8,
+        573.0,
+        591.2,
+        609.4,
+        627.5999999999999,
+        645.8,
+        664.0,
+        682.2,
+        700.4,
+        718.5999999999999,
+        736.8,
+        755.0,
+        773.2,
+        791.4,
+        809.5999999999999,
+        827.8,
+        846.0
+      ],
+      "hist_n": 44847
+    },
+    {
+      "col": "deuda_sistema",
+      "criterio_inconsistencia": "Sin regla de negocio propia; se cruza con num_creditos_vigentes (ver m\u00e1s abajo) y se reportan outliers v\u00eda q99.",
+      "n_total": 45300,
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_zeros": 0,
+      "pct_zeros": 0.0,
+      "q99": 14506040.000000007,
+      "n_above_q99": 453,
+      "pct_above_q99": 1.0,
+      "range_above_q99": [
+        14506040.000000007,
+        80000000.0
+      ],
+      "mean": 2489596.799116998,
+      "median": 1591000.0,
+      "std": 2993959.9956590678,
+      "skew": 4.970134407597341,
+      "kurtosis": 53.1213375692484,
+      "n_incons": 0,
+      "pct_incons": 0.0,
+      "normaltest_stat": 46863.01302719354,
+      "normaltest_p": 0.0,
+      "ks_norm_stat": 0.21150499720025162,
+      "ks_norm_p": 0.0,
+      "lognorm_ks_stat": 0.0032118433096420818,
+      "lognorm_ks_p": 0.7370508927498026,
+      "dispersion_index": null,
+      "interpretacion_dist": "D'Agostino-Pearson: p=0.00e+00 \u2192 se rechaza normalidad. KS vs lognormal: p=0.737 \u2192 no se rechaza el ajuste a una lognormal (consistente con skew=4.97).",
+      "notas_extra": [
+        "22,3% de las filas (10.083) tienen num_creditos_vigentes = 0 pero deuda_sistema > 0 (deuda promedio \u2248 CLP 2,2M en ese grupo). Ambas variables est\u00e1n documentadas como referidas al 'sistema financiero' completo, por lo que en teor\u00eda no deber\u00eda haber deuda vigente sin al menos un cr\u00e9dito vigente. Posible explicaci\u00f3n real: deuda castigada o en cobranza judicial (ya no figura como 'vigente' pero sigue report\u00e1ndose como deuda), o que ambas variables provienen de fuentes/cortes de fecha distintos dentro del data warehouse."
+      ],
+      "hist_counts": [
+        5314,
+        8724,
+        7140,
+        5377,
+        3996,
+        3016,
+        2295,
+        1646,
+        1345,
+        1057,
+        830,
+        689,
+        506,
+        511,
+        386,
+        304,
+        262,
+        230,
+        191,
+        177,
+        152,
+        129,
+        93,
+        92,
+        84,
+        75,
+        62,
+        72,
+        53,
+        39
+      ],
+      "hist_edges": [
+        28000.0,
+        510600.0,
+        993200.0,
+        1475800.0,
+        1958400.0,
+        2441000.0,
+        2923600.0,
+        3406200.0,
+        3888800.0,
+        4371400.0,
+        4854000.0,
+        5336600.0,
+        5819200.0,
+        6301800.0,
+        6784400.0,
+        7267000.0,
+        7749600.0,
+        8232200.0,
+        8714800.0,
+        9197400.0,
+        9680000.0,
+        10162600.0,
+        10645200.0,
+        11127800.0,
+        11610400.0,
+        12093000.0,
+        12575600.0,
+        13058200.0,
+        13540800.0,
+        14023400.0,
+        14506000.0
+      ],
+      "hist_n": 44847
+    },
+    {
+      "col": "uso_linea_credito_pct",
+      "criterio_inconsistencia": "Porcentaje fuera de [0,100].",
+      "n_total": 45300,
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_zeros": 1472,
+      "pct_zeros": 3.25,
+      "q99": 100.0,
+      "n_above_q99": 0,
+      "pct_above_q99": 0.0,
+      "range_above_q99": [
+        100.0,
+        100.0
+      ],
+      "mean": 43.302854304635765,
+      "median": 42.2,
+      "std": 24.034467705640928,
+      "skew": 0.20618318454205953,
+      "kurtosis": -0.5955046188050939,
+      "n_incons": 0,
+      "pct_incons": 0.0,
+      "normaltest_stat": 1748.7647795155583,
+      "normaltest_p": 0.0,
+      "ks_norm_stat": 0.035796460216873646,
+      "ks_norm_p": 7.206471633086283e-51,
+      "lognorm_ks_stat": null,
+      "lognorm_ks_p": null,
+      "dispersion_index": null,
+      "interpretacion_dist": "D'Agostino-Pearson: p=0.00e+00 \u2192 se rechaza normalidad. skew=0.21, kurtosis=-0.60.",
+      "notas_extra": [],
+      "hist_counts": [
+        665,
+        818,
+        988,
+        1298,
+        1418,
+        1665,
+        1855,
+        2048,
+        2141,
+        2190,
+        2318,
+        2234,
+        2277,
+        2334,
+        2114,
+        2162,
+        2067,
+        1855,
+        1714,
+        1541,
+        1395,
+        1225,
+        1114,
+        974,
+        792,
+        627,
+        557,
+        379,
+        299,
+        764
+      ],
+      "hist_edges": [
+        0.1,
+        3.43,
+        6.76,
+        10.09,
+        13.42,
+        16.75,
+        20.080000000000002,
+        23.410000000000004,
+        26.740000000000002,
+        30.07,
+        33.4,
+        36.730000000000004,
+        40.06,
+        43.39,
+        46.720000000000006,
+        50.050000000000004,
+        53.38,
+        56.71,
+        60.04,
+        63.370000000000005,
+        66.69999999999999,
+        70.03,
+        73.36,
+        76.69,
+        80.02,
+        83.35,
+        86.67999999999999,
+        90.00999999999999,
+        93.34,
+        96.67,
+        100.0
+      ],
+      "hist_n": 43828
+    },
+    {
+      "col": "monto_solicitado",
+      "criterio_inconsistencia": "Sin regla de negocio clara para marcar inconsistencia; se reportan solo outliers v\u00eda q99.",
+      "n_total": 45300,
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_zeros": 0,
+      "pct_zeros": 0.0,
+      "q99": 6720100.0000000205,
+      "n_above_q99": 453,
+      "pct_above_q99": 1.0,
+      "range_above_q99": [
+        6720100.0000000205,
+        15000000.0
+      ],
+      "mean": 1703886.7549668874,
+      "median": 1330000.0,
+      "std": 1335342.359208801,
+      "skew": 2.5269914485220237,
+      "kurtosis": 10.91979735301749,
+      "n_incons": 0,
+      "pct_incons": 0.0,
+      "normaltest_stat": 25461.009167995093,
+      "normaltest_p": 0.0,
+      "ks_norm_stat": 0.1389581720690335,
+      "ks_norm_p": 0.0,
+      "lognorm_ks_stat": 0.006507443650616951,
+      "lognorm_ks_p": 0.042944766282385305,
+      "dispersion_index": null,
+      "interpretacion_dist": "D'Agostino-Pearson: p=0.00e+00 \u2192 se rechaza normalidad. KS vs lognormal: p=4.29e-02 \u2192 tampoco se ajusta a una lognormal, aunque skew=2.53 confirma fuerte asimetr\u00eda positiva.",
+      "notas_extra": [],
+      "hist_counts": [
+        2174,
+        4317,
+        5431,
+        5082,
+        4721,
+        4028,
+        3396,
+        2625,
+        2324,
+        1846,
+        1475,
+        1293,
+        1059,
+        848,
+        721,
+        598,
+        484,
+        406,
+        312,
+        334,
+        287,
+        210,
+        175,
+        145,
+        128,
+        114,
+        102,
+        84,
+        76,
+        52
+      ],
+      "hist_edges": [
+        200000.0,
+        417333.3333333334,
+        634666.6666666667,
+        852000.0,
+        1069333.3333333335,
+        1286666.6666666667,
+        1504000.0,
+        1721333.3333333335,
+        1938666.6666666667,
+        2156000.0,
+        2373333.3333333335,
+        2590666.666666667,
+        2808000.0,
+        3025333.3333333335,
+        3242666.666666667,
+        3460000.0,
+        3677333.3333333335,
+        3894666.666666667,
+        4112000.0,
+        4329333.333333334,
+        4546666.666666667,
+        4764000.0,
+        4981333.333333334,
+        5198666.666666667,
+        5416000.0,
+        5633333.333333334,
+        5850666.666666667,
+        6068000.0,
+        6285333.333333334,
+        6502666.666666667,
+        6720000.0
+      ],
+      "hist_n": 44847
+    },
+    {
+      "col": "tasa_interes_anual",
+      "criterio_inconsistencia": "Tasa que excede la Tasa M\u00e1xima Convencional (TMC) vigente publicada por la CMF (Ley 18.010) para el tramo de monto correspondiente (\u226450 UF, 50-200 UF, 200-5.000 UF) en la fecha de la solicitud. TMC y valor UF interpolados desde certificados oficiales quincenales/mensuales (tasas.cmfchile.cl, SII) \u2014 es una aproximaci\u00f3n entre fechas de publicaci\u00f3n, no el valor exacto de cada quincena.",
+      "n_total": 45300,
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_zeros": 0,
+      "pct_zeros": 0.0,
+      "q99": 27.6,
+      "n_above_q99": 440,
+      "pct_above_q99": 0.97,
+      "range_above_q99": [
+        27.6,
+        30.7
+      ],
+      "mean": 22.841971302428256,
+      "median": 22.9,
+      "std": 2.2432392520265103,
+      "skew": -0.0705860590466801,
+      "kurtosis": -0.41574752107625645,
+      "n_incons": 8,
+      "pct_incons": 0.0177,
+      "normaltest_stat": 568.2510309872669,
+      "normaltest_p": 4.035119986165978e-124,
+      "ks_norm_stat": 0.027260176741629283,
+      "ks_norm_p": 1.1193223305570122e-29,
+      "lognorm_ks_stat": null,
+      "lognorm_ks_p": null,
+      "dispersion_index": null,
+      "interpretacion_dist": "D'Agostino-Pearson: p=4.04e-124 \u2192 se rechaza normalidad. skew=-0.07, kurtosis=-0.42.",
+      "notas_extra": [
+        "8 solicitudes (0,02%) exceden la TMC aplicable, todas en el tramo 200-5.000 UF (cr\u00e9ditos grandes, entre CLP 7,6M y 12,7M), con un exceso promedio de 0.62 puntos porcentuales (m\u00e1ximo 1.65 pp). Es un hallazgo menor en volumen pero legalmente relevante (rozar\u00eda la Ley de Usura); dado que la comparaci\u00f3n usa una interpolaci\u00f3n de la TMC entre certificados, se recomienda validar estos 8 casos contra el certificado CMF exacto de su fecha antes de tomar acci\u00f3n."
+      ],
+      "hist_counts": [
+        5,
+        7,
+        11,
+        37,
+        61,
+        172,
+        256,
+        381,
+        622,
+        783,
+        1448,
+        1518,
+        1745,
+        2035,
+        2279,
+        3176,
+        2739,
+        3028,
+        2900,
+        2947,
+        3488,
+        2753,
+        2599,
+        2409,
+        2076,
+        2088,
+        1254,
+        959,
+        652,
+        432
+      ],
+      "hist_edges": [
+        15.0,
+        15.42,
+        15.84,
+        16.26,
+        16.68,
+        17.1,
+        17.52,
+        17.94,
+        18.36,
+        18.78,
+        19.2,
+        19.62,
+        20.04,
+        20.46,
+        20.880000000000003,
+        21.3,
+        21.72,
+        22.14,
+        22.560000000000002,
+        22.98,
+        23.4,
+        23.82,
+        24.240000000000002,
+        24.66,
+        25.080000000000002,
+        25.5,
+        25.92,
+        26.340000000000003,
+        26.76,
+        27.18,
+        27.6
+      ],
+      "hist_n": 44860
+    }
+  ],
+  "categorical": [
+    {
+      "col": "tipo_empleo",
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_levels": 4,
+      "levels": [
+        {
+          "level": "dependiente",
+          "count": 25695,
+          "pct": 56.72
+        },
+        {
+          "level": "independiente",
+          "count": 12305,
+          "pct": 27.16
+        },
+        {
+          "level": "informal",
+          "count": 5761,
+          "pct": 12.72
+        },
+        {
+          "level": "jubilado",
+          "count": 1539,
+          "pct": 3.4
+        }
+      ],
+      "notas_extra": [
+        "Es autodeclarado por el solicitante al momento de originar el cr\u00e9dito, sin verificaci\u00f3n documental visible en este dataset (ej. contra SII/Previred). Existe riesgo conocido de que un solicitante 'informal' declare 'dependiente' para parecer m\u00e1s estable; no se pudo auditar cruzando con antig\u00fcedad laboral porque ese campo es estructuralmente nulo para 'informal' (ver nota en antiguedad_laboral_meses)."
+      ]
+    },
+    {
+      "col": "region",
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_levels": 16,
+      "levels": [
+        {
+          "level": "Metropolitana",
+          "count": 17975,
+          "pct": 39.68
+        },
+        {
+          "level": "Valparaiso",
+          "count": 4559,
+          "pct": 10.06
+        },
+        {
+          "level": "Biobio",
+          "count": 4038,
+          "pct": 8.91
+        },
+        {
+          "level": "Maule",
+          "count": 2740,
+          "pct": 6.05
+        },
+        {
+          "level": "Araucania",
+          "count": 2559,
+          "pct": 5.65
+        },
+        {
+          "level": "Los Lagos",
+          "count": 2279,
+          "pct": 5.03
+        },
+        {
+          "level": "OHiggins",
+          "count": 2180,
+          "pct": 4.81
+        },
+        {
+          "level": "Coquimbo",
+          "count": 2051,
+          "pct": 4.53
+        },
+        {
+          "level": "Antofagasta",
+          "count": 1880,
+          "pct": 4.15
+        },
+        {
+          "level": "Nuble",
+          "count": 1298,
+          "pct": 2.87
+        },
+        {
+          "level": "Los Rios",
+          "count": 1080,
+          "pct": 2.38
+        },
+        {
+          "level": "Tarapaca",
+          "count": 877,
+          "pct": 1.94
+        },
+        {
+          "level": "Atacama",
+          "count": 669,
+          "pct": 1.48
+        },
+        {
+          "level": "Arica",
+          "count": 467,
+          "pct": 1.03
+        },
+        {
+          "level": "Magallanes",
+          "count": 444,
+          "pct": 0.98
+        },
+        {
+          "level": "Aysen",
+          "count": 204,
+          "pct": 0.45
+        }
+      ],
+      "notas_extra": [
+        "Los nombres vienen sin tildes ni '\u00d1' (Nuble, Los Rios, OHiggins, Araucania). No son valores err\u00f3neos, pero es un artefacto t\u00edpico de sistemas core-banking legacy que truncan caracteres especiales \u2014 puede romper joins contra tablas oficiales de regiones (INE/SUBDERE) que s\u00ed usan tildes."
+      ]
+    },
+    {
+      "col": "canal",
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_levels": 3,
+      "levels": [
+        {
+          "level": "digital",
+          "count": 21755,
+          "pct": 48.02
+        },
+        {
+          "level": "sucursal",
+          "count": 14231,
+          "pct": 31.42
+        },
+        {
+          "level": "partner",
+          "count": 9314,
+          "pct": 20.56
+        }
+      ],
+      "notas_extra": []
+    },
+    {
+      "col": "dia_semana_solicitud",
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_levels": 7,
+      "levels": [
+        {
+          "level": "lun",
+          "count": 7161,
+          "pct": 15.81
+        },
+        {
+          "level": "mar",
+          "count": 7366,
+          "pct": 16.26
+        },
+        {
+          "level": "mie",
+          "count": 7324,
+          "pct": 16.17
+        },
+        {
+          "level": "jue",
+          "count": 7220,
+          "pct": 15.94
+        },
+        {
+          "level": "vie",
+          "count": 8072,
+          "pct": 17.82
+        },
+        {
+          "level": "sab",
+          "count": 5486,
+          "pct": 12.11
+        },
+        {
+          "level": "dom",
+          "count": 2671,
+          "pct": 5.9
+        }
+      ],
+      "notas_extra": [
+        "85,66% de las filas (38.804) NO coinciden con el d\u00eda de semana real calculado desde fecha_solicitud, y el cruce (d\u00eda real x d\u00eda declarado) no muestra ning\u00fan patr\u00f3n de desfase sistem\u00e1tico (no es un simple off-by-one o problema de huso horario) \u2014 el campo parece esencialmente aleatorio. Recomendaci\u00f3n: no usar este campo tal cual; recalcularlo directamente desde fecha_solicitud."
+      ]
+    },
+    {
+      "col": "num_creditos_vigentes",
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_levels": 11,
+      "levels": [
+        {
+          "level": "0",
+          "count": 10083,
+          "pct": 22.26
+        },
+        {
+          "level": "1",
+          "count": 12670,
+          "pct": 27.97
+        },
+        {
+          "level": "2",
+          "count": 10243,
+          "pct": 22.61
+        },
+        {
+          "level": "3",
+          "count": 6496,
+          "pct": 14.34
+        },
+        {
+          "level": "4",
+          "count": 3419,
+          "pct": 7.55
+        },
+        {
+          "level": "5",
+          "count": 1496,
+          "pct": 3.3
+        },
+        {
+          "level": "6",
+          "count": 585,
+          "pct": 1.29
+        },
+        {
+          "level": "7",
+          "count": 205,
+          "pct": 0.45
+        },
+        {
+          "level": "8",
+          "count": 70,
+          "pct": 0.15
+        },
+        {
+          "level": "9",
+          "count": 21,
+          "pct": 0.05
+        },
+        {
+          "level": "10",
+          "count": 12,
+          "pct": 0.03
+        }
+      ],
+      "notas_extra": [
+        "22,3% de las filas tienen num_creditos_vigentes = 0 con deuda_sistema > 0 simult\u00e1neamente (ver detalle en la card de deuda_sistema) \u2014 revisar antes de usar este campo como conteo confiable de productos activos."
+      ]
+    },
+    {
+      "col": "peor_morosidad_12m",
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_levels": 5,
+      "levels": [
+        {
+          "level": "0",
+          "count": 34118,
+          "pct": 75.32
+        },
+        {
+          "level": "15",
+          "count": 5124,
+          "pct": 11.31
+        },
+        {
+          "level": "30",
+          "count": 3239,
+          "pct": 7.15
+        },
+        {
+          "level": "60",
+          "count": 1760,
+          "pct": 3.89
+        },
+        {
+          "level": "90",
+          "count": 1059,
+          "pct": 2.34
+        }
+      ],
+      "notas_extra": []
+    },
+    {
+      "col": "num_consultas_buro_3m",
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_levels": 11,
+      "levels": [
+        {
+          "level": "0",
+          "count": 18853,
+          "pct": 41.62
+        },
+        {
+          "level": "1",
+          "count": 12494,
+          "pct": 27.58
+        },
+        {
+          "level": "2",
+          "count": 7422,
+          "pct": 16.38
+        },
+        {
+          "level": "3",
+          "count": 3821,
+          "pct": 8.43
+        },
+        {
+          "level": "4",
+          "count": 1714,
+          "pct": 3.78
+        },
+        {
+          "level": "5",
+          "count": 629,
+          "pct": 1.39
+        },
+        {
+          "level": "6",
+          "count": 233,
+          "pct": 0.51
+        },
+        {
+          "level": "7",
+          "count": 95,
+          "pct": 0.21
+        },
+        {
+          "level": "8",
+          "count": 31,
+          "pct": 0.07
+        },
+        {
+          "level": "9",
+          "count": 6,
+          "pct": 0.01
+        },
+        {
+          "level": "10",
+          "count": 2,
+          "pct": 0.0
+        }
+      ],
+      "notas_extra": []
+    },
+    {
+      "col": "num_contactos_ult_trimestre",
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_levels": 13,
+      "levels": [
+        {
+          "level": "0",
+          "count": 23631,
+          "pct": 52.17
+        },
+        {
+          "level": "1",
+          "count": 13303,
+          "pct": 29.37
+        },
+        {
+          "level": "2",
+          "count": 4161,
+          "pct": 9.19
+        },
+        {
+          "level": "3",
+          "count": 1565,
+          "pct": 3.45
+        },
+        {
+          "level": "4",
+          "count": 997,
+          "pct": 2.2
+        },
+        {
+          "level": "5",
+          "count": 727,
+          "pct": 1.6
+        },
+        {
+          "level": "6",
+          "count": 432,
+          "pct": 0.95
+        },
+        {
+          "level": "7",
+          "count": 272,
+          "pct": 0.6
+        },
+        {
+          "level": "8",
+          "count": 136,
+          "pct": 0.3
+        },
+        {
+          "level": "9",
+          "count": 41,
+          "pct": 0.09
+        },
+        {
+          "level": "10",
+          "count": 25,
+          "pct": 0.06
+        },
+        {
+          "level": "11",
+          "count": 7,
+          "pct": 0.02
+        },
+        {
+          "level": "12",
+          "count": 3,
+          "pct": 0.01
+        }
+      ],
+      "notas_extra": []
+    },
+    {
+      "col": "plazo_meses",
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_levels": 6,
+      "levels": [
+        {
+          "level": "6",
+          "count": 3591,
+          "pct": 7.93
+        },
+        {
+          "level": "12",
+          "count": 10000,
+          "pct": 22.08
+        },
+        {
+          "level": "18",
+          "count": 9065,
+          "pct": 20.01
+        },
+        {
+          "level": "24",
+          "count": 11407,
+          "pct": 25.18
+        },
+        {
+          "level": "36",
+          "count": 8144,
+          "pct": 17.98
+        },
+        {
+          "level": "48",
+          "count": 3093,
+          "pct": 6.83
+        }
+      ],
+      "notas_extra": []
+    },
+    {
+      "col": "default_12m",
+      "n_null": 0,
+      "pct_null": 0.0,
+      "n_levels": 2,
+      "levels": [
+        {
+          "level": "0",
+          "count": 40801,
+          "pct": 90.07
+        },
+        {
+          "level": "1",
+          "count": 4499,
+          "pct": 9.93
+        }
+      ],
+      "notas_extra": []
+    }
+  ],
+  "n_total": 45300
+}
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('report-data').textContent);
+const tooltip = document.getElementById('tooltip');
+
+const LABELS = {
+  edad: ["Edad", "años"],
+  ingreso_declarado: ["Ingreso declarado", "CLP / mes"],
+  antiguedad_laboral_meses: ["Antigüedad laboral", "meses"],
+  antiguedad_cliente_meses: ["Antigüedad como cliente", "meses"],
+  score_buro: ["Score de buró", "300–850"],
+  deuda_sistema: ["Deuda en el sistema financiero", "CLP"],
+  uso_linea_credito_pct: ["Uso de línea de crédito", "%"],
+  monto_solicitado: ["Monto solicitado", "CLP"],
+  tasa_interes_anual: ["Tasa de interés anual", "%"],
+};
+
+const CAT_LABELS = {
+  tipo_empleo: "Tipo de empleo",
+  region: "Región",
+  canal: "Canal de originación",
+  dia_semana_solicitud: "Día de semana de la solicitud",
+  num_creditos_vigentes: "N° créditos vigentes",
+  peor_morosidad_12m: "Peor morosidad 12m previos",
+  num_consultas_buro_3m: "Consultas al buró (3m)",
+  num_contactos_ult_trimestre: "Contactos último trimestre",
+  plazo_meses: "Plazo",
+  default_12m: "Default 12m (target)",
+};
+
+const CAT_UNITS = {
+  num_creditos_vigentes: "conteo (0–10)",
+  peor_morosidad_12m: "días",
+  num_consultas_buro_3m: "conteo (0–10)",
+  num_contactos_ult_trimestre: "conteo (0–12)",
+  plazo_meses: "meses",
+  default_12m: "0 = no default, 1 = default",
+};
+
+function fmt(n, decimals) {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return Number(n).toLocaleString('es-CL', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function fmtInt(n) { return Number(n).toLocaleString('es-CL'); }
+function fmtP(p) {
+  if (p === null || p === undefined) return "—";
+  return p < 0.001 ? p.toExponential(2) : p.toFixed(3);
+}
+
+function renderHistogram(svg, counts, edges) {
+  const W = 600, H = 150, padL = 34, padR = 8, padT = 8, padB = 20;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxCount = Math.max(...counts, 1);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('class', 'hist');
+  let html = '';
+
+  // gridlines (4 horizontal)
+  const nGrid = 4;
+  for (let i = 0; i <= nGrid; i++) {
+    const y = padT + plotH - (i / nGrid) * plotH;
+    html += `<line class="grid-line" x1="${padL}" x2="${W - padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
+    const val = Math.round((i / nGrid) * maxCount);
+    html += `<text class="axis-label" x="${padL - 6}" y="${(y + 3).toFixed(1)}" text-anchor="end">${fmtInt(val)}</text>`;
+  }
+  // baseline
+  html += `<line class="axis-line" x1="${padL}" x2="${W - padR}" y1="${(padT + plotH).toFixed(1)}" y2="${(padT + plotH).toFixed(1)}"/>`;
+
+  const n = counts.length;
+  const barW = plotW / n;
+  const gap = Math.min(1.5, barW * 0.08);
+  counts.forEach((c, i) => {
+    const h = (c / maxCount) * plotH;
+    const x = padL + i * barW;
+    const y = padT + plotH - h;
+    html += `<rect class="bar" x="${(x + gap / 2).toFixed(2)}" y="${y.toFixed(2)}" width="${Math.max(0, barW - gap).toFixed(2)}" height="${h.toFixed(2)}" data-lo="${edges[i]}" data-hi="${edges[i + 1]}" data-count="${c}"></rect>`;
+  });
+
+  // x-axis ticks: 5 ticks across edges
+  const nTicks = 5;
+  for (let i = 0; i <= nTicks; i++) {
+    const edgeIdx = Math.round((i / nTicks) * n);
+    const edgeVal = edges[Math.min(edgeIdx, edges.length - 1)];
+    const x = padL + Math.min(edgeIdx, n) * barW;
+    html += `<text class="axis-label" x="${x.toFixed(1)}" y="${H - 4}" text-anchor="${i === 0 ? 'start' : (i === nTicks ? 'end' : 'middle')}">${fmtCompact(edgeVal)}</text>`;
+  }
+
+  svg.innerHTML = html;
+
+  svg.querySelectorAll('.bar').forEach(rect => {
+    rect.addEventListener('mousemove', (e) => {
+      const lo = fmtCompact(parseFloat(rect.dataset.lo));
+      const hi = fmtCompact(parseFloat(rect.dataset.hi));
+      tooltip.textContent = `[${lo}, ${hi}]: ${fmtInt(rect.dataset.count)} solicitudes`;
+      tooltip.style.left = e.clientX + 'px';
+      tooltip.style.top = (e.clientY - 10) + 'px';
+      tooltip.classList.add('show');
+    });
+    rect.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+  });
+}
+
+function fmtCompact(v) {
+  if (Math.abs(v) >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 1e3) return (v / 1e3).toFixed(1) + 'k';
+  return Number.isInteger(v) ? String(v) : v.toFixed(1);
+}
+
+const numericGrid = document.getElementById('numeric-grid');
+DATA.numeric.forEach(r => {
+  const [label, unit] = LABELS[r.col] || [r.col, ''];
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const pctInconsDecimals = (r.pct_incons > 0 && r.pct_incons < 0.1) ? 3 : 2;
+  const inconsHtml = r.n_incons > 0
+    ? `<div class="note-row crit"><b>Inconsistencias: ${fmt(r.pct_incons,pctInconsDecimals)}%</b> (${fmtInt(r.n_incons)} filas). Criterio: ${r.criterio_inconsistencia}</div>`
+    : `<div class="note-row">Inconsistencias: 0%. Criterio evaluado: ${r.criterio_inconsistencia}</div>`;
+
+  const dispHtml = r.dispersion_index !== null
+    ? `<div class="stat"><div class="lbl">Var/Media</div><div class="val">${fmt(r.dispersion_index,2)}</div></div>`
+    : `<div class="stat"><div class="lbl">Asimetría</div><div class="val">${fmt(r.skew,2)}</div></div>`;
+
+  const extraHtml = (r.notas_extra || []).map(n => `<div class="note-row extra">${n}</div>`).join('');
+
+  card.innerHTML = `
+    <h3>${label}</h3>
+    <p class="unit">${unit} · n válido = ${fmtInt(r.n_total - r.n_null)}</p>
+    <div class="stat-grid">
+      <div class="stat"><div class="lbl">% Nulos</div><div class="val ${r.pct_null>0?'warn':''}">${fmt(r.pct_null,2)}%</div></div>
+      <div class="stat"><div class="lbl">% Ceros</div><div class="val">${fmt(r.pct_zeros,2)}%</div></div>
+      <div class="stat"><div class="lbl">Media</div><div class="val">${fmt(r.mean,1)}</div></div>
+      <div class="stat"><div class="lbl">Mediana</div><div class="val">${fmt(r.median,1)}</div></div>
+      <div class="stat"><div class="lbl">Desv. Estándar</div><div class="val">${fmt(r.std,1)}</div></div>
+      <div class="stat"><div class="lbl">p99</div><div class="val">${fmt(r.q99,1)}</div></div>
+      <div class="stat"><div class="lbl">% &gt; p99</div><div class="val">${fmt(r.pct_above_q99,2)}%</div></div>
+      ${dispHtml}
+    </div>
+    <div class="note-row">Rango sobre p99: [${fmtCompact(r.range_above_q99[0])}, ${fmtCompact(r.range_above_q99[1])}] · ${fmtInt(r.n_above_q99)} filas</div>
+    ${inconsHtml}
+    <div class="note-row dist">${r.interpretacion_dist}</div>
+    ${extraHtml}
+    <div class="chart-box"><svg class="hist"></svg></div>
+  `;
+  numericGrid.appendChild(card);
+  renderHistogram(card.querySelector('svg.hist'), r.hist_counts, r.hist_edges);
+});
+
+const catGrid = document.getElementById('cat-grid');
+DATA.categorical.forEach(r => {
+  const label = CAT_LABELS[r.col] || r.col;
+  const card = document.createElement('div');
+  card.className = 'card';
+  const maxCount = Math.max(...r.levels.filter(l => l.count).map(l => l.count));
+  let rows = '';
+  r.levels.forEach(l => {
+    if (l.count === undefined || l.count === null || Number.isNaN(l.count)) return;
+    const pct = (l.count / maxCount) * 100;
+    rows += `<div class="catbar-row">
+      <div class="catbar-label" title="${l.level}">${l.level}</div>
+      <div class="catbar-track"><div class="catbar-fill" style="width:${pct.toFixed(1)}%"></div></div>
+      <div class="catbar-val">${fmtInt(l.count)} (${fmt(l.pct,1)}%)</div>
+    </div>`;
+  });
+  const unit = CAT_UNITS[r.col];
+  const extraHtmlCat = (r.notas_extra || []).map(n => `<div class="note-row extra">${n}</div>`).join('');
+  card.innerHTML = `
+    <h3>${label}</h3>
+    <p class="unit">${unit ? unit + ' · ' : ''}${r.n_levels} niveles · % nulos = ${fmt(r.pct_null,2)}%</p>
+    ${rows}
+    ${extraHtmlCat}
+  `;
+  catGrid.appendChild(card);
+});
+
+document.getElementById('footer-note').textContent =
+  "Test de normalidad: D'Agostino-Pearson (scipy.stats.normaltest) y Kolmogorov-Smirnov contra normal ajustada. " +
+  "Para variables con sesgo positivo se probó además ajuste a lognormal (KS). Para variables de conteo se reporta el índice de dispersión (varianza/media) contra la referencia Poisson (=1). " +
+  "Con n=45.300 los tests de hipótesis tienen muchísima potencia: incluso desviaciones pequeñas de la normalidad son estadísticamente significativas (p≈0), por lo que la forma del histograma y el sesgo/curtosis son más informativos que el p-value solo.";
+</script>
