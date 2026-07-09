@@ -1,0 +1,1566 @@
+<meta charset="utf-8">
+<title>Modelo de riesgo de crédito — Ronda 1</title>
+<style>
+.viz-root {
+  --surface-1:      #fcfcfb;
+  --page-plane:     #f9f9f7;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #898781;
+  --gridline:       #e1e0d9;
+  --baseline:       #c3c2b7;
+  --series-1:       #2a78d6;
+  --series-2:       #e34948;
+  --border:         rgba(11,11,11,0.10);
+  --bad:            #d03b3b;
+  --warn:           #eda100;
+  --good:           #0ca30c;
+}
+@media (prefers-color-scheme: dark) {
+  .viz-root {
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --series-1:       #3987e5;
+    --series-2:       #e66767;
+    --border:         rgba(255,255,255,0.10);
+    --bad:            #e66767;
+    --warn:           #c98500;
+    --good:           #0ca30c;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  --surface-1:      #1a1a19; --page-plane: #0d0d0d; --text-primary: #ffffff;
+  --text-secondary: #c3c2b7; --text-muted: #898781; --gridline: #2c2c2a;
+  --baseline: #383835; --series-1: #3987e5; --series-2: #e66767;
+  --border: rgba(255,255,255,0.10); --bad: #e66767; --warn: #c98500; --good: #0ca30c;
+}
+:root[data-theme="light"] .viz-root {
+  --surface-1:      #fcfcfb; --page-plane: #f9f9f7; --text-primary: #0b0b0b;
+  --text-secondary: #52514e; --text-muted: #898781; --gridline: #e1e0d9;
+  --baseline: #c3c2b7; --series-1: #2a78d6; --series-2: #e34948;
+  --border: rgba(11,11,11,0.10); --bad: #d03b3b; --warn: #eda100; --good: #0ca30c;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+.viz-root {
+  background: var(--page-plane); color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: 24px 16px 64px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0 0 4px; }
+.subtitle { color: var(--text-secondary); font-size: 0.95rem; margin: 0 0 24px; max-width: 800px; line-height: 1.5; }
+h2 { font-size: 1.25rem; margin: 44px 0 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 1rem; margin: 0 0 10px; }
+.section-intro { color: var(--text-secondary); font-size: 0.9rem; margin: 8px 0 16px; max-width: 800px; line-height: 1.6; }
+.card {
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px 22px 18px; margin-bottom: 16px;
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 860px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+.hero-box { display: flex; gap: 16px; flex-wrap: wrap; }
+.hero-stat { flex: 1; min-width: 160px; background: var(--page-plane); border-radius: 10px; padding: 16px; text-align: center; }
+.hero-stat .num { font-size: 1.9rem; font-weight: 700; color: var(--series-1); font-variant-numeric: tabular-nums; }
+.hero-stat .lbl { font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px; line-height: 1.35; }
+
+.note-row { font-size: 0.85rem; color: var(--text-secondary); background: var(--page-plane); border-radius: 8px; padding: 10px 12px; margin: 10px 0; line-height: 1.55; }
+.note-row b { color: var(--text-primary); }
+.note-row.crit { border-left: 3px solid var(--bad); }
+.note-row.extra { border-left: 3px solid var(--warn); }
+.note-row.good { border-left: 3px solid var(--good); }
+.note-row.dist { border-left: 3px solid var(--series-1); }
+
+table.datatable { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+table.datatable th, table.datatable td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+table.datatable th:first-child, table.datatable td:first-child { text-align: left; font-variant-numeric: normal; }
+table.datatable th { color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: .02em; }
+table.datatable tbody tr:hover { background: var(--page-plane); }
+table.datatable tbody tr.risky td { color: var(--bad); font-weight: 600; }
+table.datatable tbody tr.safe td { color: var(--good); }
+
+.bar-row { display: grid; grid-template-columns: 220px 1fr 80px; align-items: center; gap: 10px; margin: 7px 0; }
+.bar-label { font-size: 0.83rem; color: var(--text-secondary); text-align: right; }
+.bar-track { background: var(--page-plane); border-radius: 4px; height: 18px; position: relative; }
+.bar-fill { height: 100%; border-radius: 4px; position: absolute; }
+.bar-mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--baseline); }
+.bar-val { font-size: 0.78rem; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+
+.chart-box { position: relative; margin-top: 8px; }
+svg.hist { width: 100%; height: 220px; display: block; overflow: visible; }
+.bar-hist-safe { fill: var(--series-1); opacity: 0.85; }
+.bar-hist-bad { fill: var(--series-2); opacity: 0.85; }
+.bar-hist-test { fill: var(--series-1); }
+.axis-line { stroke: var(--baseline); stroke-width: 1; }
+.grid-line { stroke: var(--gridline); stroke-width: 1; }
+.axis-label { fill: var(--text-muted); font-size: 10px; font-family: system-ui, sans-serif; }
+.legend-row { display: flex; gap: 18px; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px; align-items: center; }
+.legend-sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+.tooltip {
+  position: fixed; pointer-events: none; background: var(--text-primary); color: var(--surface-1);
+  font-size: 0.72rem; padding: 5px 8px; border-radius: 5px; transform: translate(-50%, -100%);
+  white-space: nowrap; z-index: 50; opacity: 0; transition: opacity 0.08s;
+}
+.tooltip.show { opacity: 1; }
+
+.footer-note { color: var(--text-muted); font-size: 0.78rem; margin-top: 36px; line-height: 1.6; }
+.tag { display: inline-block; font-size: 0.68rem; padding: 2px 8px; border-radius: 999px; font-weight: 600; margin-left: 6px; }
+.tag.leak { background: rgba(208,59,59,0.15); color: var(--bad); }
+.tag.win { background: rgba(10,163,10,0.12); color: var(--good); }
+details.appendix summary { cursor: pointer; font-weight: 600; padding: 10px 0; color: var(--text-secondary); }
+details.appendix[open] summary { color: var(--text-primary); }
+</style>
+
+<div class="viz-root">
+  <div class="wrap">
+    <h1>Modelo de probabilidad de pago — Ronda 1</h1>
+    <p class="subtitle">Primera versión de un modelo que estima la probabilidad de que un crédito caiga en mora de 90+ días dentro de los 12 meses posteriores al desembolso. Esta ronda usa los datos <b>tal como llegaron</b>, sin corregir los errores de captura detectados en la exploración (eso se evalúa en una ronda posterior, para poder medir cuánto aporta esa limpieza).</p>
+
+    <div class="card">
+      <h3>Resumen para decisión</h3>
+      <div class="hero-box" id="hero-stats"></div>
+      <div class="note-row good" id="hero-recommendation"></div>
+      <div class="note-row extra" id="hero-drift"></div>
+    </div>
+
+    <h2>1. Cómo se entrenó y se validó el modelo</h2>
+    <p class="section-intro">Para que la performance reportada sea realista (no "optimista"), el modelo se validó de forma temporal: se entrena solo con solicitudes anteriores a una fecha de corte, y se mide qué tan bien predice solicitudes posteriores que nunca vio — igual que en producción, donde solo conocemos el pasado para predecir el futuro.</p>
+    <div class="card">
+      <div id="methodology-content"></div>
+    </div>
+
+    <h2>2. Resultado: ¿qué tan bien distingue el modelo?</h2>
+    <p class="section-intro">Medido sobre las solicitudes de validación (2025, nunca vistas durante el entrenamiento). Ambas métricas van de 0 (no distingue nada) a 1 (distinción perfecta).</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>Regresión logística <span class="tag win" id="tag-logit"></span></h3>
+        <div id="metrics-logit"></div>
+      </div>
+      <div class="card">
+        <h3>Boosting (LightGBM)</h3>
+        <div id="metrics-lgbm"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="note-row dist" id="model-choice-note"></div>
+    </div>
+
+    <h2>3. La prueba más intuitiva: tabla de deciles</h2>
+    <p class="section-intro">Se ordenan las solicitudes de validación de mayor a menor riesgo según el modelo y se dividen en 10 grupos iguales (deciles). Si el modelo funciona, el decil 10 (los que el modelo marca como más riesgosos) debería tener muchos más defaults reales que el decil 1.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>Regresión logística</h3>
+        <table class="datatable" id="decile-logit-table"></table>
+      </div>
+      <div class="card">
+        <h3>Boosting (LightGBM)</h3>
+        <table class="datatable" id="decile-lgbm-table"></table>
+      </div>
+    </div>
+
+    <h2>4. ¿Qué variables mueven más el score?</h2>
+    <p class="section-intro">Para la regresión logística, la barra indica si la variable empuja el score hacia más riesgo (rojo, a la derecha) o hacia menos riesgo (azul, a la izquierda). Para el boosting, se muestra qué tanto usa el modelo cada variable para hacer sus predicciones (no indica dirección).</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>Regresión logística — dirección del efecto</h3>
+        <div id="coef-chart"></div>
+      </div>
+      <div class="card">
+        <h3>Boosting — importancia de cada variable</h3>
+        <div id="importance-chart"></div>
+      </div>
+    </div>
+
+    <h2>5. Distribución del score</h2>
+    <p class="section-intro">A la izquierda, cómo se reparte el score entre quienes efectivamente pagaron (azul) y quienes cayeron en default (rojo) en la validación — buena separación es lo que se busca. A la derecha, el mismo score aplicado a las solicitudes nuevas de test.csv (sin resultado observado todavía), para verificar que el modelo asigna scores razonables a datos nuevos y no se comporta de forma extraña.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>Regresión logística — Validación (por resultado real)</h3>
+        <div class="legend-row"><span><span class="legend-sw" style="background:var(--series-1)"></span>No default</span><span><span class="legend-sw" style="background:var(--series-2)"></span>Default</span></div>
+        <div class="chart-box"><svg class="hist" id="hist-valid-logit"></svg></div>
+      </div>
+      <div class="card">
+        <h3>Regresión logística — test.csv (12.000 solicitudes nuevas)</h3>
+        <div class="chart-box"><svg class="hist" id="hist-test-logit"></svg></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Boosting — Validación (por resultado real)</h3>
+        <div class="legend-row"><span><span class="legend-sw" style="background:var(--series-1)"></span>No default</span><span><span class="legend-sw" style="background:var(--series-2)"></span>Default</span></div>
+        <div class="chart-box"><svg class="hist" id="hist-valid-lgbm"></svg></div>
+      </div>
+      <div class="card">
+        <h3>Boosting — test.csv (12.000 solicitudes nuevas)</h3>
+        <div class="chart-box"><svg class="hist" id="hist-test-lgbm"></svg></div>
+      </div>
+    </div>
+
+    <h2>6. Qué queda pendiente / limitaciones de esta ronda</h2>
+    <div class="card" id="limitations"></div>
+
+    <h2>Anexo técnico</h2>
+    <details class="appendix">
+      <summary>Búsqueda de hiperparámetros — regresión logística (tabla completa)</summary>
+      <table class="datatable" id="logit-search-table"></table>
+    </details>
+    <details class="appendix">
+      <summary>Búsqueda de hiperparámetros — LightGBM (tabla completa)</summary>
+      <table class="datatable" id="lgbm-search-table"></table>
+    </details>
+    <details class="appendix">
+      <summary>Coeficientes completos — regresión logística</summary>
+      <table class="datatable" id="logit-coefs-full-table"></table>
+    </details>
+    <details class="appendix">
+      <summary>Importancia completa — LightGBM</summary>
+      <table class="datatable" id="lgbm-importance-full-table"></table>
+    </details>
+    <details class="appendix">
+      <summary>Artefactos guardados y cómo reutilizarlos</summary>
+      <div id="artifacts-content"></div>
+    </details>
+
+    <p class="footer-note" id="footer-note"></p>
+  </div>
+  <div class="tooltip" id="tooltip"></div>
+</div>
+
+<script id="report-data" type="application/json">
+{
+  "split_date": "2025-01-01",
+  "n_train_window": 40426,
+  "n_valid_window": 4874,
+  "n_test": 12000,
+  "n_full_train": 45300,
+  "default_rate_train_window": 0.0954831049324692,
+  "default_rate_valid_window": 0.13110381616741895,
+  "imputation_recipe": "group_median_tipo_empleo",
+  "excluded_features": [
+    "num_contactos_ult_trimestre (fuga confirmada)",
+    "dia_semana_solicitud (no confiable)"
+  ],
+  "logit_search": [
+    {
+      "C": 0.01,
+      "class_weight": null,
+      "auc": 0.8337074790339837,
+      "gini": 0.6674149580679674,
+      "ks": 0.5213529108535511,
+      "pr_auc": 0.4836406027687378,
+      "brier": 0.08960623163030897,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "C": 0.01,
+      "class_weight": "balanced",
+      "auc": 0.833534171050176,
+      "gini": 0.667068342100352,
+      "ks": 0.522403475028315,
+      "pr_auc": 0.48167053465856174,
+      "brier": 0.16794582442087433,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "C": 0.1,
+      "class_weight": null,
+      "auc": 0.8335182814056052,
+      "gini": 0.6670365628112105,
+      "ks": 0.5208385298013979,
+      "pr_auc": 0.4835216418360923,
+      "brier": 0.08954087981624424,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "C": 0.1,
+      "class_weight": "balanced",
+      "auc": 0.8334347683899541,
+      "gini": 0.6668695367799082,
+      "ks": 0.5222552948545266,
+      "pr_auc": 0.4816389994062311,
+      "brier": 0.16798640360908237,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "C": 1.0,
+      "class_weight": null,
+      "auc": 0.8333737964979963,
+      "gini": 0.6667475929959925,
+      "ks": 0.5201626656172111,
+      "pr_auc": 0.4832201001667523,
+      "brier": 0.08956030544251048,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "C": 1.0,
+      "class_weight": "balanced",
+      "auc": 0.833415183479204,
+      "gini": 0.6668303669584079,
+      "ks": 0.5217830398368171,
+      "pr_auc": 0.48170166925339997,
+      "brier": 0.16800639428839342,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "C": 10.0,
+      "class_weight": null,
+      "auc": 0.8334957402819119,
+      "gini": 0.6669914805638237,
+      "ks": 0.5203662747836884,
+      "pr_auc": 0.48344102847033893,
+      "brier": 0.0895361422493081,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "C": 10.0,
+      "class_weight": "balanced",
+      "auc": 0.8334440065554022,
+      "gini": 0.6668880131108044,
+      "ks": 0.5222552948545266,
+      "pr_auc": 0.4817442189776516,
+      "brier": 0.16798059395512951,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    }
+  ],
+  "lgbm_search": [
+    {
+      "num_leaves": 15,
+      "learning_rate": 0.05,
+      "n_estimators": 300,
+      "min_child_samples": 30,
+      "scale_pos_weight": 1.0,
+      "auc": 0.8307165305884896,
+      "gini": 0.6614330611769792,
+      "ks": 0.5166063414462903,
+      "pr_auc": 0.4682284377330291,
+      "brier": 0.09031600281391615,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "num_leaves": 15,
+      "learning_rate": 0.05,
+      "n_estimators": 300,
+      "min_child_samples": 30,
+      "scale_pos_weight": 9.473056994818652,
+      "auc": 0.8310184338353352,
+      "gini": 0.6620368676706705,
+      "ks": 0.5179676775067299,
+      "pr_auc": 0.4660727521763506,
+      "brier": 0.15798546274100914,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "num_leaves": 31,
+      "learning_rate": 0.05,
+      "n_estimators": 300,
+      "min_child_samples": 30,
+      "scale_pos_weight": 1.0,
+      "auc": 0.8270877792004552,
+      "gini": 0.6541755584009104,
+      "ks": 0.5178520156753191,
+      "pr_auc": 0.4543504150312821,
+      "brier": 0.09156182919683953,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "num_leaves": 31,
+      "learning_rate": 0.05,
+      "n_estimators": 500,
+      "min_child_samples": 50,
+      "scale_pos_weight": 1.0,
+      "auc": 0.8223522955917324,
+      "gini": 0.6447045911834648,
+      "ks": 0.512546352495136,
+      "pr_auc": 0.43371343472600976,
+      "brier": 0.09308521403773813,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "num_leaves": 31,
+      "learning_rate": 0.1,
+      "n_estimators": 200,
+      "min_child_samples": 50,
+      "scale_pos_weight": 1.0,
+      "auc": 0.8204595802547147,
+      "gini": 0.6409191605094293,
+      "ks": 0.5056010997112149,
+      "pr_auc": 0.4336577725039726,
+      "brier": 0.09277921671605395,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "num_leaves": 63,
+      "learning_rate": 0.05,
+      "n_estimators": 300,
+      "min_child_samples": 20,
+      "scale_pos_weight": 1.0,
+      "auc": 0.8220426322859101,
+      "gini": 0.6440852645718202,
+      "ks": 0.5108513338987091,
+      "pr_auc": 0.4428428812459355,
+      "brier": 0.09300332385569852,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "num_leaves": 31,
+      "learning_rate": 0.05,
+      "n_estimators": 300,
+      "min_child_samples": 100,
+      "scale_pos_weight": 1.0,
+      "auc": 0.8251773265857774,
+      "gini": 0.6503546531715547,
+      "ks": 0.5101935765188006,
+      "pr_auc": 0.4473307013119814,
+      "brier": 0.09182890122783861,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    },
+    {
+      "num_leaves": 31,
+      "learning_rate": 0.02,
+      "n_estimators": 800,
+      "min_child_samples": 50,
+      "scale_pos_weight": 1.0,
+      "auc": 0.8256902295314587,
+      "gini": 0.6513804590629173,
+      "ks": 0.521218033638008,
+      "pr_auc": 0.4494849932958637,
+      "brier": 0.09183258710002484,
+      "n": 4874,
+      "n_pos": 639,
+      "default_rate": 0.13110381616741895
+    }
+  ],
+  "best_logit_cfg": {
+    "C": 0.01,
+    "class_weight": null,
+    "auc": 0.8337074790339837,
+    "gini": 0.6674149580679674,
+    "ks": 0.5213529108535511,
+    "pr_auc": 0.4836406027687378,
+    "brier": 0.08960623163030897,
+    "n": 4874,
+    "n_pos": 639,
+    "default_rate": 0.13110381616741895
+  },
+  "best_lgbm_cfg": {
+    "num_leaves": 15,
+    "learning_rate": 0.05,
+    "n_estimators": 300,
+    "min_child_samples": 30,
+    "scale_pos_weight": 1.0,
+    "auc": 0.8307165305884896,
+    "gini": 0.6614330611769792,
+    "ks": 0.5166063414462903,
+    "pr_auc": 0.4682284377330291,
+    "brier": 0.09031600281391615,
+    "n": 4874,
+    "n_pos": 639,
+    "default_rate": 0.13110381616741895
+  },
+  "metrics_logit_oot": {
+    "auc": 0.8337074790339837,
+    "gini": 0.6674149580679674,
+    "ks": 0.5213529108535511,
+    "pr_auc": 0.4836406027687378,
+    "brier": 0.08960623163030897,
+    "n": 4874,
+    "n_pos": 639,
+    "default_rate": 0.13110381616741895
+  },
+  "metrics_lgbm_oot": {
+    "auc": 0.8307165305884896,
+    "gini": 0.6614330611769792,
+    "ks": 0.5166063414462903,
+    "pr_auc": 0.4682284377330291,
+    "brier": 0.09031600281391615,
+    "n": 4874,
+    "n_pos": 639,
+    "default_rate": 0.13110381616741895
+  },
+  "logit_coefs": [
+    {
+      "feature": "score_buro",
+      "coef": -0.89993218523449
+    },
+    {
+      "feature": "uso_linea_credito_pct",
+      "coef": 0.3996831592252054
+    },
+    {
+      "feature": "log_deuda_sistema",
+      "coef": 0.26042543863263445
+    },
+    {
+      "feature": "num_consultas_buro_3m",
+      "coef": 0.2520715487593557
+    },
+    {
+      "feature": "peor_morosidad_12m",
+      "coef": 0.22795874494141632
+    },
+    {
+      "feature": "log_monto_solicitado",
+      "coef": 0.22749192162785864
+    },
+    {
+      "feature": "plazo_meses",
+      "coef": 0.18264483890630567
+    },
+    {
+      "feature": "antiguedad_laboral_meses",
+      "coef": -0.13204976800822524
+    },
+    {
+      "feature": "antiguedad_cliente_meses",
+      "coef": -0.08751094785721739
+    },
+    {
+      "feature": "canal_digital",
+      "coef": 0.052793243265268075
+    },
+    {
+      "feature": "num_creditos_vigentes",
+      "coef": 0.05090778114267749
+    },
+    {
+      "feature": "flag_ingreso_declarado_nulo",
+      "coef": 0.046964543055634154
+    },
+    {
+      "feature": "tipo_empleo_informal",
+      "coef": 0.043135457248819814
+    },
+    {
+      "feature": "flag_antiguedad_laboral_nulo",
+      "coef": 0.0402488314916108
+    },
+    {
+      "feature": "canal_partner",
+      "coef": -0.03907035399029946
+    },
+    {
+      "feature": "edad",
+      "coef": -0.031079843126172006
+    },
+    {
+      "feature": "region_Valparaiso",
+      "coef": -0.02700371510004087
+    },
+    {
+      "feature": "region_Aysen",
+      "coef": -0.02457811961206719
+    },
+    {
+      "feature": "canal_sucursal",
+      "coef": -0.024162894531408324
+    },
+    {
+      "feature": "region_Atacama",
+      "coef": 0.024076431614834155
+    },
+    {
+      "feature": "region_OHiggins",
+      "coef": -0.023910564162003423
+    },
+    {
+      "feature": "region_Magallanes",
+      "coef": 0.023296427459633572
+    },
+    {
+      "feature": "region_Coquimbo",
+      "coef": 0.022464910683160446
+    },
+    {
+      "feature": "tasa_interes_anual",
+      "coef": 0.021943294319993
+    },
+    {
+      "feature": "tipo_empleo_dependiente",
+      "coef": -0.020259199261207332
+    },
+    {
+      "feature": "region_Los Rios",
+      "coef": -0.018777325563537166
+    },
+    {
+      "feature": "region_Los Lagos",
+      "coef": 0.017042127055670736
+    },
+    {
+      "feature": "region_Maule",
+      "coef": -0.014164299228275078
+    },
+    {
+      "feature": "region_Araucania",
+      "coef": 0.01380815268598864
+    },
+    {
+      "feature": "region_Antofagasta",
+      "coef": 0.01273243963848742
+    },
+    {
+      "feature": "region_Biobio",
+      "coef": -0.012415421413135062
+    },
+    {
+      "feature": "region_Tarapaca",
+      "coef": 0.01225915329473373
+    },
+    {
+      "feature": "tipo_empleo_independiente",
+      "coef": -0.012118757710351473
+    },
+    {
+      "feature": "region_Metropolitana",
+      "coef": 0.006658995759618359
+    },
+    {
+      "feature": "region_Arica",
+      "coef": -0.0065359219888627
+    },
+    {
+      "feature": "region_Nuble",
+      "coef": 0.002560329959485158
+    },
+    {
+      "feature": "tipo_empleo_jubilado",
+      "coef": 0.002356004450249143
+    },
+    {
+      "feature": "log_ingreso_declarado",
+      "coef": 0.0022058455973377753
+    }
+  ],
+  "lgbm_importance": [
+    {
+      "feature": "score_buro",
+      "importance": 469
+    },
+    {
+      "feature": "uso_linea_credito_pct",
+      "importance": 437
+    },
+    {
+      "feature": "log_deuda_sistema",
+      "importance": 421
+    },
+    {
+      "feature": "log_monto_solicitado",
+      "importance": 396
+    },
+    {
+      "feature": "antiguedad_cliente_meses",
+      "importance": 348
+    },
+    {
+      "feature": "tasa_interes_anual",
+      "importance": 337
+    },
+    {
+      "feature": "antiguedad_laboral_meses",
+      "importance": 324
+    },
+    {
+      "feature": "log_ingreso_declarado",
+      "importance": 318
+    },
+    {
+      "feature": "edad",
+      "importance": 248
+    },
+    {
+      "feature": "num_consultas_buro_3m",
+      "importance": 185
+    },
+    {
+      "feature": "peor_morosidad_12m",
+      "importance": 171
+    },
+    {
+      "feature": "plazo_meses",
+      "importance": 157
+    },
+    {
+      "feature": "num_creditos_vigentes",
+      "importance": 96
+    },
+    {
+      "feature": "canal_digital",
+      "importance": 43
+    },
+    {
+      "feature": "region_Metropolitana",
+      "importance": 30
+    },
+    {
+      "feature": "flag_ingreso_declarado_nulo",
+      "importance": 25
+    },
+    {
+      "feature": "tipo_empleo_dependiente",
+      "importance": 22
+    },
+    {
+      "feature": "region_Coquimbo",
+      "importance": 17
+    },
+    {
+      "feature": "region_Valparaiso",
+      "importance": 15
+    },
+    {
+      "feature": "canal_partner",
+      "importance": 15
+    },
+    {
+      "feature": "tipo_empleo_independiente",
+      "importance": 13
+    },
+    {
+      "feature": "region_Araucania",
+      "importance": 12
+    },
+    {
+      "feature": "canal_sucursal",
+      "importance": 12
+    },
+    {
+      "feature": "region_Atacama",
+      "importance": 11
+    },
+    {
+      "feature": "region_Magallanes",
+      "importance": 11
+    },
+    {
+      "feature": "tipo_empleo_informal",
+      "importance": 10
+    },
+    {
+      "feature": "region_Los Rios",
+      "importance": 9
+    },
+    {
+      "feature": "region_Maule",
+      "importance": 9
+    },
+    {
+      "feature": "region_Los Lagos",
+      "importance": 8
+    },
+    {
+      "feature": "region_Biobio",
+      "importance": 7
+    },
+    {
+      "feature": "region_OHiggins",
+      "importance": 7
+    },
+    {
+      "feature": "region_Aysen",
+      "importance": 5
+    },
+    {
+      "feature": "region_Antofagasta",
+      "importance": 4
+    },
+    {
+      "feature": "region_Tarapaca",
+      "importance": 4
+    },
+    {
+      "feature": "flag_antiguedad_laboral_nulo",
+      "importance": 1
+    },
+    {
+      "feature": "tipo_empleo_jubilado",
+      "importance": 1
+    },
+    {
+      "feature": "region_Arica",
+      "importance": 1
+    },
+    {
+      "feature": "region_Nuble",
+      "importance": 1
+    }
+  ],
+  "decile_logit_valid": [
+    {
+      "decile": 10,
+      "n": 488,
+      "avg_pred": 0.4523745393428418,
+      "default_rate": 0.5163934426229508
+    },
+    {
+      "decile": 9,
+      "n": 487,
+      "avg_pred": 0.21362786749117868,
+      "default_rate": 0.27104722792607805
+    },
+    {
+      "decile": 8,
+      "n": 487,
+      "avg_pred": 0.13430567402788496,
+      "default_rate": 0.18275154004106775
+    },
+    {
+      "decile": 7,
+      "n": 488,
+      "avg_pred": 0.08847537483139056,
+      "default_rate": 0.125
+    },
+    {
+      "decile": 6,
+      "n": 487,
+      "avg_pred": 0.059454703276855536,
+      "default_rate": 0.06776180698151951
+    },
+    {
+      "decile": 5,
+      "n": 487,
+      "avg_pred": 0.04057867837338978,
+      "default_rate": 0.057494866529774126
+    },
+    {
+      "decile": 4,
+      "n": 488,
+      "avg_pred": 0.02699620093036355,
+      "default_rate": 0.0471311475409836
+    },
+    {
+      "decile": 3,
+      "n": 487,
+      "avg_pred": 0.017253858789564282,
+      "default_rate": 0.026694045174537988
+    },
+    {
+      "decile": 2,
+      "n": 487,
+      "avg_pred": 0.009919314379182653,
+      "default_rate": 0.01026694045174538
+    },
+    {
+      "decile": 1,
+      "n": 488,
+      "avg_pred": 0.003924487985574545,
+      "default_rate": 0.006147540983606557
+    }
+  ],
+  "decile_lgbm_valid": [
+    {
+      "decile": 10,
+      "n": 488,
+      "avg_pred": 0.4630734546346199,
+      "default_rate": 0.5163934426229508
+    },
+    {
+      "decile": 9,
+      "n": 487,
+      "avg_pred": 0.22613114348685232,
+      "default_rate": 0.27720739219712526
+    },
+    {
+      "decile": 8,
+      "n": 487,
+      "avg_pred": 0.13536132871006448,
+      "default_rate": 0.18275154004106775
+    },
+    {
+      "decile": 7,
+      "n": 488,
+      "avg_pred": 0.08519325598429428,
+      "default_rate": 0.10450819672131148
+    },
+    {
+      "decile": 6,
+      "n": 487,
+      "avg_pred": 0.054456754892653024,
+      "default_rate": 0.07597535934291581
+    },
+    {
+      "decile": 5,
+      "n": 487,
+      "avg_pred": 0.03486004244096036,
+      "default_rate": 0.06365503080082136
+    },
+    {
+      "decile": 4,
+      "n": 488,
+      "avg_pred": 0.022161252410078228,
+      "default_rate": 0.045081967213114756
+    },
+    {
+      "decile": 3,
+      "n": 487,
+      "avg_pred": 0.013264015746180803,
+      "default_rate": 0.030800821355236138
+    },
+    {
+      "decile": 2,
+      "n": 487,
+      "avg_pred": 0.007246691708727904,
+      "default_rate": 0.008213552361396304
+    },
+    {
+      "decile": 1,
+      "n": 488,
+      "avg_pred": 0.0028521977200935823,
+      "default_rate": 0.006147540983606557
+    }
+  ],
+  "hist_valid_logit": {
+    "counts_no_default": [
+      1612,
+      805,
+      465,
+      319,
+      215,
+      156,
+      133,
+      106,
+      77,
+      67,
+      44,
+      44,
+      34,
+      30,
+      21,
+      14,
+      13,
+      14,
+      16,
+      14,
+      5,
+      4,
+      5,
+      4,
+      5,
+      6,
+      2,
+      2,
+      0,
+      1
+    ],
+    "counts_default": [
+      33,
+      43,
+      33,
+      45,
+      39,
+      37,
+      39,
+      42,
+      22,
+      31,
+      22,
+      23,
+      23,
+      15,
+      15,
+      17,
+      16,
+      16,
+      11,
+      10,
+      15,
+      12,
+      13,
+      12,
+      10,
+      4,
+      4,
+      6,
+      6,
+      7
+    ],
+    "edges": [
+      0.0,
+      0.025517996584761723,
+      0.051035993169523446,
+      0.07655398975428516,
+      0.10207198633904689,
+      0.1275899829238086,
+      0.15310797950857033,
+      0.17862597609333206,
+      0.20414397267809378,
+      0.2296619692628555,
+      0.2551799658476172,
+      0.28069796243237893,
+      0.30621595901714066,
+      0.3317339556019024,
+      0.3572519521866641,
+      0.38276994877142584,
+      0.40828794535618756,
+      0.4338059419409493,
+      0.459323938525711,
+      0.48484193511047274,
+      0.5103599316952344,
+      0.5358779282799961,
+      0.5613959248647579,
+      0.5869139214495196,
+      0.6124319180342813,
+      0.637949914619043,
+      0.6634679112038048,
+      0.6889859077885665,
+      0.7145039043733282,
+      0.74002190095809,
+      0.7655398975428517
+    ]
+  },
+  "hist_valid_lgbm": {
+    "counts_no_default": [
+      1827,
+      705,
+      396,
+      289,
+      206,
+      132,
+      124,
+      91,
+      76,
+      63,
+      57,
+      44,
+      40,
+      30,
+      26,
+      22,
+      14,
+      8,
+      16,
+      20,
+      10,
+      7,
+      11,
+      4,
+      4,
+      4,
+      2,
+      3,
+      0,
+      1
+    ],
+    "counts_default": [
+      41,
+      47,
+      36,
+      37,
+      36,
+      32,
+      32,
+      34,
+      37,
+      24,
+      18,
+      17,
+      19,
+      15,
+      17,
+      26,
+      23,
+      16,
+      16,
+      12,
+      16,
+      13,
+      10,
+      9,
+      13,
+      10,
+      8,
+      4,
+      10,
+      3
+    ],
+    "edges": [
+      0.0,
+      0.025517996584761723,
+      0.051035993169523446,
+      0.07655398975428516,
+      0.10207198633904689,
+      0.1275899829238086,
+      0.15310797950857033,
+      0.17862597609333206,
+      0.20414397267809378,
+      0.2296619692628555,
+      0.2551799658476172,
+      0.28069796243237893,
+      0.30621595901714066,
+      0.3317339556019024,
+      0.3572519521866641,
+      0.38276994877142584,
+      0.40828794535618756,
+      0.4338059419409493,
+      0.459323938525711,
+      0.48484193511047274,
+      0.5103599316952344,
+      0.5358779282799961,
+      0.5613959248647579,
+      0.5869139214495196,
+      0.6124319180342813,
+      0.637949914619043,
+      0.6634679112038048,
+      0.6889859077885665,
+      0.7145039043733282,
+      0.74002190095809,
+      0.7655398975428517
+    ]
+  },
+  "hist_test_logit": {
+    "counts": [
+      3869,
+      2107,
+      1265,
+      857,
+      647,
+      565,
+      377,
+      325,
+      233,
+      219,
+      172,
+      174,
+      147,
+      119,
+      126,
+      95,
+      87,
+      73,
+      65,
+      56,
+      58,
+      48,
+      36,
+      34,
+      45,
+      47,
+      24,
+      31,
+      26,
+      13
+    ],
+    "edges": [
+      0.0,
+      0.025517996584761723,
+      0.051035993169523446,
+      0.07655398975428516,
+      0.10207198633904689,
+      0.1275899829238086,
+      0.15310797950857033,
+      0.17862597609333206,
+      0.20414397267809378,
+      0.2296619692628555,
+      0.2551799658476172,
+      0.28069796243237893,
+      0.30621595901714066,
+      0.3317339556019024,
+      0.3572519521866641,
+      0.38276994877142584,
+      0.40828794535618756,
+      0.4338059419409493,
+      0.459323938525711,
+      0.48484193511047274,
+      0.5103599316952344,
+      0.5358779282799961,
+      0.5613959248647579,
+      0.5869139214495196,
+      0.6124319180342813,
+      0.637949914619043,
+      0.6634679112038048,
+      0.6889859077885665,
+      0.7145039043733282,
+      0.74002190095809,
+      0.7655398975428517
+    ],
+    "n_above_max": 60
+  },
+  "hist_test_lgbm": {
+    "counts": [
+      4367,
+      1902,
+      1151,
+      763,
+      643,
+      458,
+      345,
+      284,
+      275,
+      197,
+      190,
+      168,
+      145,
+      116,
+      114,
+      104,
+      91,
+      76,
+      79,
+      75,
+      63,
+      64,
+      51,
+      50,
+      37,
+      44,
+      34,
+      28,
+      22,
+      15
+    ],
+    "edges": [
+      0.0,
+      0.025517996584761723,
+      0.051035993169523446,
+      0.07655398975428516,
+      0.10207198633904689,
+      0.1275899829238086,
+      0.15310797950857033,
+      0.17862597609333206,
+      0.20414397267809378,
+      0.2296619692628555,
+      0.2551799658476172,
+      0.28069796243237893,
+      0.30621595901714066,
+      0.3317339556019024,
+      0.3572519521866641,
+      0.38276994877142584,
+      0.40828794535618756,
+      0.4338059419409493,
+      0.459323938525711,
+      0.48484193511047274,
+      0.5103599316952344,
+      0.5358779282799961,
+      0.5613959248647579,
+      0.5869139214495196,
+      0.6124319180342813,
+      0.637949914619043,
+      0.6634679112038048,
+      0.6889859077885665,
+      0.7145039043733282,
+      0.74002190095809,
+      0.7655398975428517
+    ],
+    "n_above_max": 49
+  }
+}
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('report-data').textContent);
+const tooltip = document.getElementById('tooltip');
+
+function fmt(n, d=2) {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return Number(n).toLocaleString('es-CL', {minimumFractionDigits: d, maximumFractionDigits: d});
+}
+function fmtInt(n) { return Number(n).toLocaleString('es-CL'); }
+function fmtPct(n, d=1) { return fmt(n*100, d) + '%'; }
+
+const LABELS = {
+  edad: "Edad", ingreso_declarado: "Ingreso declarado", log_ingreso_declarado: "Ingreso declarado (log)",
+  antiguedad_laboral_meses: "Antigüedad laboral", antiguedad_cliente_meses: "Antigüedad cliente",
+  score_buro: "Score de buró", deuda_sistema: "Deuda en el sistema", log_deuda_sistema: "Deuda en el sistema (log)",
+  num_creditos_vigentes: "N° créditos vigentes", peor_morosidad_12m: "Peor morosidad 12m previos",
+  num_consultas_buro_3m: "Consultas al buró (3m)", uso_linea_credito_pct: "Uso de línea de crédito",
+  monto_solicitado: "Monto solicitado", log_monto_solicitado: "Monto solicitado (log)",
+  plazo_meses: "Plazo (meses)", tasa_interes_anual: "Tasa de interés anual",
+  flag_ingreso_declarado_nulo: "Sin declaración de renta (flag)",
+  flag_antiguedad_laboral_nulo: "Sin antigüedad laboral (flag)",
+};
+function label(f) {
+  if (LABELS[f]) return LABELS[f];
+  if (f.startsWith('tipo_empleo_')) return 'Tipo de empleo: ' + f.replace('tipo_empleo_','');
+  if (f.startsWith('canal_')) return 'Canal: ' + f.replace('canal_','');
+  if (f.startsWith('region_')) return 'Región: ' + f.replace('region_','');
+  return f;
+}
+
+// ================= Hero =================
+function renderHero() {
+  const l = DATA.metrics_logit_oot, g = DATA.metrics_lgbm_oot;
+  document.getElementById('hero-stats').innerHTML = `
+    <div class="hero-stat"><div class="num">${fmtInt(DATA.n_full_train)}</div><div class="lbl">Solicitudes usadas para entrenar (train.csv completo)</div></div>
+    <div class="hero-stat"><div class="num">${fmt(l.auc,3)}</div><div class="lbl">Índice de discriminación (AUC) — regresión logística</div></div>
+    <div class="hero-stat"><div class="num">${fmt(l.ks,3)}</div><div class="lbl">Separación buenos/malos pagadores (KS)</div></div>
+    <div class="hero-stat"><div class="num">${fmtInt(DATA.n_test)}</div><div class="lbl">Solicitudes nuevas ya scoreadas (test.csv)</div></div>
+  `;
+  document.getElementById('hero-recommendation').innerHTML =
+    `<b>Recomendación de esta ronda:</b> usar la <b>regresión logística</b> como modelo principal. Rinde igual o levemente mejor que el boosting (AUC ${fmt(l.auc,3)} vs ${fmt(g.auc,3)}) y es mucho más fácil de explicar y auditar — cada variable tiene un efecto claro y en la dirección esperada (ver sección 4). El boosting se deja como comparación/respaldo.`;
+  const ddelta = ((DATA.default_rate_valid_window - DATA.default_rate_train_window) * 100).toFixed(1);
+  document.getElementById('hero-drift').innerHTML =
+    `<b>Ojo con esto:</b> la tasa de default real subió de ${fmtPct(DATA.default_rate_train_window)} en el período de entrenamiento (ene-dic 2024) a ${fmtPct(DATA.default_rate_valid_window)} en el período de validación (ene-feb 2025) — un alza de ${ddelta} puntos porcentuales. El modelo sigue discriminando bien entre buenos y malos pagadores incluso con ese cambio, pero cualquier política de aprobación basada en este score debe monitorearse de cerca, porque la tasa base de riesgo del negocio se está moviendo.`;
+}
+
+// ================= Metodologia =================
+function renderMethodology() {
+  document.getElementById('methodology-content').innerHTML = `
+    <div class="note-row"><b>Partición temporal:</b> entrenamiento con solicitudes del ${'01-01-2024'} al ${DATA.split_date} (sin incluir), ${fmtInt(DATA.n_train_window)} solicitudes. Validación con el resto de train.csv (${DATA.split_date} en adelante), ${fmtInt(DATA.n_valid_window)} solicitudes. La selección de hiperparámetros de ambos modelos se hizo comparando su desempeño únicamente en la ventana de validación — nunca se usó esa ventana para entrenar.</div>
+    <div class="note-row"><b>Datos faltantes:</b> ingreso_declarado y antigüedad_laboral_meses son los únicos campos con nulos. Se probaron 3 formas de rellenarlos (mediana general, mediana por tipo de empleo, y un método basado en solicitudes similares/KNN) y las 3 dieron una performance prácticamente idéntica (diferencia de 0,00006 en AUC, dentro del margen de ruido). Se eligió <b>mediana por tipo de empleo</b> para el ingreso (más realista que un número genérico) y <b>0</b> para antigüedad laboral en los casos sin empleador formal actual (informal/jubilado) — no porque ganara en performance, sino porque refleja mejor el significado real del dato. Además se agregó una marca ("flag") indicando qué filas tenían el dato faltante originalmente, porque el hecho de no declarar renta o no tener antigüedad laboral resultó ser, en sí mismo, una señal de riesgo.</div>
+    <div class="note-row extra"><b>Una variable se excluyó a propósito:</b> num_contactos_ult_trimestre parecía un excelente predictor en la exploración de datos, pero el análisis mostró que es casi con certeza una fuga de información (probablemente registra contactos de cobranza que ocurren <i>después</i> de que el crédito ya cayó en mora, no antes). Incluirla haría ver al modelo mucho mejor de lo que realmente es, y fallaría en producción. También se excluyó el día de la semana de la solicitud, porque no coincide con la fecha real en el 86% de los casos y no tiene relación estadística con el resultado.</div>
+    <div class="note-row">Se transformaron con logaritmo las variables de montos (ingreso, deuda y monto solicitado), ya que su distribución es muy asimétrica (unos pocos valores extremos muy altos) — esto ayuda especialmente a la regresión logística a captar mejor su relación con el riesgo. Para el boosting esta transformación es menos crítica, pero se mantuvo igual para poder comparar ambos modelos con las mismas variables.</div>
+  `;
+}
+
+// ================= Metricas =================
+const METRIC_INFO = [
+  ["auc", "AUC (discriminación)", "De cada 100 pares (un cliente que cayó en default y uno que no), en cuántos el modelo asigna correctamente el score más alto al que sí cayó."],
+  ["ks", "KS (separación)", "Qué tan lejos están, en el peor punto, la curva acumulada de buenos pagadores vs. la de malos pagadores. Estándar en la industria de riesgo crediticio."],
+  ["gini", "Gini", "Otra forma de resumir el AUC (Gini = 2×AUC − 1), muy usada en banca."],
+  ["pr_auc", "Precisión-Recall (AUC)", "Qué tan bien identifica los defaults reales sin generar demasiadas falsas alarmas — más exigente que el AUC porque el default es poco frecuente (~10-13%)."],
+  ["brier", "Error de calibración (Brier)", "Qué tan cerca están las probabilidades que entrega el modelo de la tasa de default real observada — más bajo es mejor. Importante porque la política de aprobación usa la probabilidad, no solo el orden."],
+];
+function renderMetricsCard(elId, m) {
+  let html = '';
+  METRIC_INFO.forEach(([key, name, desc]) => {
+    html += `<div class="note-row"><b>${name}: ${fmt(m[key], key==='brier'?4:3)}</b><br>${desc}</div>`;
+  });
+  document.getElementById(elId).innerHTML = html;
+}
+
+function renderModelChoiceNote() {
+  document.getElementById('model-choice-note').innerHTML =
+    `Ambos modelos se afinaron probando también variantes que "rebalancean" la clase minoritaria (reponderar los casos de default). Esas variantes casi no cambiaban el AUC/KS pero empeoraban mucho el error de calibración (de ~0,09 a ~0,16-0,17) — es decir, las probabilidades que entregaban dejaban de ser realistas. Como el objetivo final es usar la probabilidad de default en un cálculo de ganancia esperada (no solo ordenar clientes), se descartaron esas variantes aunque tuvieran un AUC casi idéntico o levemente mejor. El detalle completo está en el anexo técnico.`;
+}
+
+// ================= Decile tables =================
+function renderDecileTable(elId, deciles) {
+  const rows = deciles.map(d => {
+    const cls = d.decile >= 9 ? 'risky' : (d.decile <= 2 ? 'safe' : '');
+    return `<tr class="${cls}">
+      <td>Decil ${d.decile}${d.decile===10?' (más riesgo)':''}${d.decile===1?' (menos riesgo)':''}</td>
+      <td>${fmtInt(d.n)}</td>
+      <td>${fmtPct(d.avg_pred)}</td>
+      <td>${fmtPct(d.default_rate)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById(elId).innerHTML = `
+    <thead><tr><th>Grupo</th><th>N</th><th>Score promedio</th><th>Default real</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+// ================= Coef / importance charts =================
+function renderCoefChart() {
+  const items = DATA.logit_coefs.slice(0, 15);
+  const maxAbs = Math.max(...items.map(i => Math.abs(i.coef)));
+  let html = '';
+  items.forEach(it => {
+    const pct = (Math.abs(it.coef) / maxAbs) * 50;
+    const color = it.coef >= 0 ? 'var(--series-2)' : 'var(--series-1)';
+    const left = it.coef >= 0 ? '50%' : (50 - pct) + '%';
+    html += `<div class="bar-row">
+      <div class="bar-label">${label(it.feature)}</div>
+      <div class="bar-track"><div class="bar-mid"></div><div class="bar-fill" style="left:${left};width:${pct}%;background:${color}"></div></div>
+      <div class="bar-val">${it.coef>=0?'+':''}${fmt(it.coef,3)}</div>
+    </div>`;
+  });
+  document.getElementById('coef-chart').innerHTML = html;
+}
+function renderImportanceChart() {
+  const items = DATA.lgbm_importance.slice(0, 15);
+  const maxV = Math.max(...items.map(i => i.importance));
+  let html = '';
+  items.forEach(it => {
+    const pct = (it.importance / maxV) * 100;
+    html += `<div class="bar-row">
+      <div class="bar-label">${label(it.feature)}</div>
+      <div class="bar-track"><div class="bar-fill" style="left:0;width:${pct}%;background:var(--series-1)"></div></div>
+      <div class="bar-val">${fmtInt(it.importance)}</div>
+    </div>`;
+  });
+  document.getElementById('importance-chart').innerHTML = html;
+}
+
+// ================= Histograms =================
+function renderHistByClass(svgId, histData) {
+  const svg = document.getElementById(svgId);
+  const edges = histData.edges;
+  const c0 = histData.counts_no_default, c1 = histData.counts_default;
+  const W = 600, H = 220, padL = 40, padR = 8, padT = 8, padB = 26;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxCount = Math.max(...c0, ...c1, 1);
+  const n = c0.length;
+  const barW = plotW / n;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let html = '';
+  const nGrid = 4;
+  for (let i = 0; i <= nGrid; i++) {
+    const y = padT + plotH - (i/nGrid)*plotH;
+    html += `<line class="grid-line" x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
+    html += `<text class="axis-label" x="${padL-6}" y="${(y+3).toFixed(1)}" text-anchor="end">${fmtInt(Math.round((i/nGrid)*maxCount))}</text>`;
+  }
+  html += `<line class="axis-line" x1="${padL}" x2="${W-padR}" y1="${(padT+plotH).toFixed(1)}" y2="${(padT+plotH).toFixed(1)}"/>`;
+  for (let i = 0; i < n; i++) {
+    const x = padL + i*barW;
+    const h0 = (c0[i]/maxCount)*plotH, h1 = (c1[i]/maxCount)*plotH;
+    const hMax = Math.max(h0, h1);
+    if (h0 >= h1) {
+      html += `<rect class="bar-hist-safe" x="${(x+0.5).toFixed(2)}" y="${(padT+plotH-h0).toFixed(2)}" width="${Math.max(0,barW-1).toFixed(2)}" height="${h0.toFixed(2)}" data-lo="${edges[i]}" data-hi="${edges[i+1]}" data-c0="${c0[i]}" data-c1="${c1[i]}"></rect>`;
+      html += `<rect class="bar-hist-bad" x="${(x+0.5).toFixed(2)}" y="${(padT+plotH-h1).toFixed(2)}" width="${Math.max(0,barW-1).toFixed(2)}" height="${h1.toFixed(2)}" data-lo="${edges[i]}" data-hi="${edges[i+1]}" data-c0="${c0[i]}" data-c1="${c1[i]}"></rect>`;
+    } else {
+      html += `<rect class="bar-hist-bad" x="${(x+0.5).toFixed(2)}" y="${(padT+plotH-h1).toFixed(2)}" width="${Math.max(0,barW-1).toFixed(2)}" height="${h1.toFixed(2)}" data-lo="${edges[i]}" data-hi="${edges[i+1]}" data-c0="${c0[i]}" data-c1="${c1[i]}"></rect>`;
+      html += `<rect class="bar-hist-safe" x="${(x+0.5).toFixed(2)}" y="${(padT+plotH-h0).toFixed(2)}" width="${Math.max(0,barW-1).toFixed(2)}" height="${h0.toFixed(2)}" data-lo="${edges[i]}" data-hi="${edges[i+1]}" data-c0="${c0[i]}" data-c1="${c1[i]}"></rect>`;
+    }
+  }
+  const nTicks = 5;
+  for (let i = 0; i <= nTicks; i++) {
+    const edgeIdx = Math.min(Math.round((i/nTicks)*n), n);
+    const val = edges[Math.min(edgeIdx, edges.length-1)];
+    const x = padL + Math.min(edgeIdx, n)*barW;
+    html += `<text class="axis-label" x="${x.toFixed(1)}" y="${H-6}" text-anchor="${i===0?'start':(i===nTicks?'end':'middle')}">${val.toFixed(2)}</text>`;
+  }
+  svg.innerHTML = html;
+  svg.querySelectorAll('rect').forEach(rect => {
+    rect.addEventListener('mousemove', (e) => {
+      const lo = parseFloat(rect.dataset.lo).toFixed(2), hi = parseFloat(rect.dataset.hi).toFixed(2);
+      tooltip.textContent = `score [${lo}, ${hi}]: ${fmtInt(rect.dataset.c0)} sin default, ${fmtInt(rect.dataset.c1)} con default`;
+      tooltip.style.left = e.clientX + 'px'; tooltip.style.top = (e.clientY-10) + 'px';
+      tooltip.classList.add('show');
+    });
+    rect.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+  });
+}
+function renderHistTest(svgId, histData) {
+  const svg = document.getElementById(svgId);
+  const edges = histData.edges, counts = histData.counts;
+  const W = 600, H = 220, padL = 40, padR = 8, padT = 8, padB = 26;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxCount = Math.max(...counts, 1);
+  const n = counts.length;
+  const barW = plotW / n;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let html = '';
+  const nGrid = 4;
+  for (let i = 0; i <= nGrid; i++) {
+    const y = padT + plotH - (i/nGrid)*plotH;
+    html += `<line class="grid-line" x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
+    html += `<text class="axis-label" x="${padL-6}" y="${(y+3).toFixed(1)}" text-anchor="end">${fmtInt(Math.round((i/nGrid)*maxCount))}</text>`;
+  }
+  html += `<line class="axis-line" x1="${padL}" x2="${W-padR}" y1="${(padT+plotH).toFixed(1)}" y2="${(padT+plotH).toFixed(1)}"/>`;
+  counts.forEach((c, i) => {
+    const h = (c/maxCount)*plotH;
+    const x = padL + i*barW;
+    html += `<rect class="bar-hist-test" x="${(x+0.5).toFixed(2)}" y="${(padT+plotH-h).toFixed(2)}" width="${Math.max(0,barW-1).toFixed(2)}" height="${h.toFixed(2)}" data-lo="${edges[i]}" data-hi="${edges[i+1]}" data-c="${c}"></rect>`;
+  });
+  const nTicks = 5;
+  for (let i = 0; i <= nTicks; i++) {
+    const edgeIdx = Math.min(Math.round((i/nTicks)*n), n);
+    const val = edges[Math.min(edgeIdx, edges.length-1)];
+    const x = padL + Math.min(edgeIdx, n)*barW;
+    html += `<text class="axis-label" x="${x.toFixed(1)}" y="${H-6}" text-anchor="${i===0?'start':(i===nTicks?'end':'middle')}">${val.toFixed(2)}</text>`;
+  }
+  svg.innerHTML = html;
+  svg.querySelectorAll('rect').forEach(rect => {
+    rect.addEventListener('mousemove', (e) => {
+      const lo = parseFloat(rect.dataset.lo).toFixed(2), hi = parseFloat(rect.dataset.hi).toFixed(2);
+      tooltip.textContent = `score [${lo}, ${hi}]: ${fmtInt(rect.dataset.c)} solicitudes`;
+      tooltip.style.left = e.clientX + 'px'; tooltip.style.top = (e.clientY-10) + 'px';
+      tooltip.classList.add('show');
+    });
+    rect.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+  });
+}
+
+// ================= Limitaciones =================
+function renderLimitations() {
+  document.getElementById('limitations').innerHTML = `
+    <div class="note-row extra">Esta ronda no corrige las inconsistencias de datos ya documentadas (edades imposibles, ingresos mal capturados, 9 casos que superan la tasa máxima legal). Se hace así a propósito, para poder comparar en una próxima ronda si limpiar esos datos mejora o no la performance — con este resultado ya tenemos el "piso" de referencia.</div>
+    <div class="note-row">tasa_interes_anual se incluyó en el modelo, pero es una variable que la propia empresa fija según su política de pricing — es decir, probablemente ya incorpora una evaluación de riesgo previa. Vale la pena, en una siguiente iteración, comparar el modelo con y sin esta variable.</div>
+    <div class="note-row">Este reporte entrega el score de probabilidad de default, pero todavía no define un punto de corte de aprobación ni calcula la ganancia esperada según la economía del producto — ese es el siguiente paso, una vez que se decida qué versión del modelo (con o sin limpieza de datos) se usará en producción.</div>
+    <div class="note-row good">Lo bueno: la conclusión de que la regresión logística es suficiente (rinde igual que el boosting) probablemente se mantenga en las próximas rondas, porque ya vimos en el análisis exploratorio que las relaciones entre las variables y el riesgo son mayormente lineales y aditivas (sin interacciones fuertes) — es justo el escenario donde un modelo lineal compite de igual a igual con uno más complejo.</div>
+  `;
+}
+
+// ================= Anexo tecnico =================
+function renderSearchTable(elId, search, cols) {
+  const rows = search.map(r => `<tr>${cols.map(c => {
+    const v = r[c];
+    let out;
+    if (v === null || v === undefined) out = 'ninguno';
+    else if (typeof v === 'number') out = fmt(v, c==='C'||c==='learning_rate'?3:(c.includes('auc')||c==='ks'||c==='gini'||c==='brier'?4:2));
+    else out = v;
+    return `<td>${out}</td>`;
+  }).join('')}</tr>`).join('');
+  document.getElementById(elId).innerHTML = `
+    <thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+function renderFullFeatureTable(elId, items, valueKey, valueLabel) {
+  const rows = items.map(it => `<tr><td>${label(it.feature)}</td><td>${fmt(it[valueKey], valueKey==='coef'?4:0)}</td></tr>`).join('');
+  document.getElementById(elId).innerHTML = `<thead><tr><th>Variable</th><th>${valueLabel}</th></tr></thead><tbody>${rows}</tbody>`;
+}
+function renderArtifacts() {
+  document.getElementById('artifacts-content').innerHTML = `
+    <div class="note-row">Se guardaron 4 pipelines completos (preprocesamiento + modelo) con joblib en <code>models/round1/</code>:
+      <ul>
+        <li><code>logit_final_full_train.joblib</code> / <code>lgbm_final_full_train.joblib</code>: entrenados con el 100% de train.csv — son los que se deben usar para scorear datos nuevos.</li>
+        <li><code>logit_oot_train_window.joblib</code> / <code>lgbm_oot_train_window.joblib</code>: entrenados solo con la ventana previa a 2025, usados únicamente para calcular las métricas honestas de este reporte.</li>
+      </ul>
+      Cada pipeline incluye la imputación, la transformación logarítmica, el one-hot encoding y (para la logística) el escalamiento — no se necesita ningún preprocesamiento manual adicional, solo entregarle las columnas originales de train.csv/test.csv al pipeline cargado.
+    </div>
+  `;
+}
+
+renderHero();
+renderMethodology();
+renderMetricsCard('metrics-logit', DATA.metrics_logit_oot);
+renderMetricsCard('metrics-lgbm', DATA.metrics_lgbm_oot);
+document.getElementById('tag-logit').textContent = 'recomendado';
+renderModelChoiceNote();
+renderDecileTable('decile-logit-table', DATA.decile_logit_valid);
+renderDecileTable('decile-lgbm-table', DATA.decile_lgbm_valid);
+renderCoefChart();
+renderImportanceChart();
+renderHistByClass('hist-valid-logit', DATA.hist_valid_logit);
+renderHistByClass('hist-valid-lgbm', DATA.hist_valid_lgbm);
+renderHistTest('hist-test-logit', DATA.hist_test_logit);
+renderHistTest('hist-test-lgbm', DATA.hist_test_lgbm);
+renderLimitations();
+renderSearchTable('logit-search-table', DATA.logit_search, ['C','class_weight','auc','ks','gini','pr_auc','brier']);
+renderSearchTable('lgbm-search-table', DATA.lgbm_search, ['num_leaves','learning_rate','n_estimators','min_child_samples','scale_pos_weight','auc','ks','gini','pr_auc','brier']);
+renderFullFeatureTable('logit-coefs-full-table', DATA.logit_coefs, 'coef', 'Coeficiente');
+renderFullFeatureTable('lgbm-importance-full-table', DATA.lgbm_importance, 'importance', 'Importancia');
+renderArtifacts();
+
+document.getElementById('footer-note').textContent =
+  "Ronda 1 de 3. Datos: train.csv completo (45.300 filas), sin corrección de inconsistencias. Modelos: LogisticRegression y LGBMClassifier (scikit-learn / LightGBM). Validación: partición temporal (train < 2025-01-01, validación resto de train.csv), hiperparámetros elegidos por AUC en validación entre candidatos con calibración sana. Variables excluidas: num_contactos_ult_trimestre (fuga) y dia_semana_solicitud (no confiable). Código en code/round1/, artefactos en models/round1/.";
+</script>

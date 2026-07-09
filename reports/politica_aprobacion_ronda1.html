@@ -1,0 +1,661 @@
+<meta charset="utf-8">
+<title>Política de aprobación — Ronda 1</title>
+<style>
+.viz-root {
+  --surface-1:      #fcfcfb;
+  --page-plane:     #f9f9f7;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #898781;
+  --gridline:       #e1e0d9;
+  --baseline:       #c3c2b7;
+  --series-1:       #2a78d6;
+  --series-2:       #e34948;
+  --border:         rgba(11,11,11,0.10);
+  --bad:            #d03b3b;
+  --warn:           #eda100;
+  --good:           #0ca30c;
+}
+@media (prefers-color-scheme: dark) {
+  .viz-root {
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --series-1:       #3987e5;
+    --series-2:       #e66767;
+    --border:         rgba(255,255,255,0.10);
+    --bad:            #e66767;
+    --warn:           #c98500;
+    --good:           #0ca30c;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  --surface-1:      #1a1a19; --page-plane: #0d0d0d; --text-primary: #ffffff;
+  --text-secondary: #c3c2b7; --text-muted: #898781; --gridline: #2c2c2a;
+  --baseline: #383835; --series-1: #3987e5; --series-2: #e66767;
+  --border: rgba(255,255,255,0.10); --bad: #e66767; --warn: #c98500; --good: #0ca30c;
+}
+:root[data-theme="light"] .viz-root {
+  --surface-1:      #fcfcfb; --page-plane: #f9f9f7; --text-primary: #0b0b0b;
+  --text-secondary: #52514e; --text-muted: #898781; --gridline: #e1e0d9;
+  --baseline: #c3c2b7; --series-1: #2a78d6; --series-2: #e34948;
+  --border: rgba(11,11,11,0.10); --bad: #d03b3b; --warn: #eda100; --good: #0ca30c;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+.viz-root {
+  background: var(--page-plane); color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: 24px 16px 64px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0 0 4px; }
+.subtitle { color: var(--text-secondary); font-size: 0.95rem; margin: 0 0 24px; max-width: 800px; line-height: 1.5; }
+h2 { font-size: 1.25rem; margin: 44px 0 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 1rem; margin: 0 0 10px; }
+.section-intro { color: var(--text-secondary); font-size: 0.9rem; margin: 8px 0 16px; max-width: 800px; line-height: 1.6; }
+.card {
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px 22px 18px; margin-bottom: 16px;
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 860px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+.hero-box { display: flex; gap: 16px; flex-wrap: wrap; }
+.hero-stat { flex: 1; min-width: 160px; background: var(--page-plane); border-radius: 10px; padding: 16px; text-align: center; }
+.hero-stat .num { font-size: 1.7rem; font-weight: 700; color: var(--series-1); font-variant-numeric: tabular-nums; }
+.hero-stat .lbl { font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px; line-height: 1.35; }
+
+.note-row { font-size: 0.85rem; color: var(--text-secondary); background: var(--page-plane); border-radius: 8px; padding: 10px 12px; margin: 10px 0; line-height: 1.55; }
+.note-row b { color: var(--text-primary); }
+.note-row.crit { border-left: 3px solid var(--bad); }
+.note-row.extra { border-left: 3px solid var(--warn); }
+.note-row.good { border-left: 3px solid var(--good); }
+.note-row.dist { border-left: 3px solid var(--series-1); }
+
+table.datatable { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+table.datatable th, table.datatable td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+table.datatable th:first-child, table.datatable td:first-child { text-align: left; font-variant-numeric: normal; }
+table.datatable th { color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: .02em; }
+table.datatable tbody tr:hover { background: var(--page-plane); }
+table.datatable tbody tr.risky td { color: var(--bad); font-weight: 600; }
+table.datatable tbody tr.safe td { color: var(--good); font-weight: 600; }
+
+.chart-box { position: relative; margin-top: 8px; }
+svg.hist, svg.linechart { width: 100%; height: 240px; display: block; overflow: visible; }
+.bar-hist-test { fill: var(--series-1); }
+.axis-line { stroke: var(--baseline); stroke-width: 1; }
+.grid-line { stroke: var(--gridline); stroke-width: 1; }
+.axis-label { fill: var(--text-muted); font-size: 10px; font-family: system-ui, sans-serif; }
+.legend-row { display: flex; gap: 18px; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px; align-items: center; }
+.legend-sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+.tooltip {
+  position: fixed; pointer-events: none; background: var(--text-primary); color: var(--surface-1);
+  font-size: 0.72rem; padding: 5px 8px; border-radius: 5px; transform: translate(-50%, -100%);
+  white-space: nowrap; z-index: 50; opacity: 0; transition: opacity 0.08s;
+}
+.tooltip.show { opacity: 1; }
+
+.footer-note { color: var(--text-muted); font-size: 0.78rem; margin-top: 36px; line-height: 1.6; }
+.tag { display: inline-block; font-size: 0.68rem; padding: 2px 8px; border-radius: 999px; font-weight: 600; margin-left: 6px; }
+.tag.win { background: rgba(10,163,10,0.12); color: var(--good); }
+</style>
+
+<div class="viz-root">
+  <div class="wrap">
+    <h1>Política de aprobación recomendada</h1>
+    <p class="subtitle">Traduce el score de probabilidad de default (Ronda 1, regresión logística) en una decisión de aprobar/rechazar, usando la economía del producto: ganancia si paga, pérdida si cae en default. Se valida con resultados reales de 2025 y se aplica a las 12.000 solicitudes nuevas de test.csv.</p>
+
+    <div class="card">
+      <h3>Resumen para decisión</h3>
+      <div class="hero-box" id="hero-stats"></div>
+      <div class="note-row good" id="hero-note"></div>
+    </div>
+
+    <h2>1. La regla: umbral de aprobación por plazo</h2>
+    <p class="section-intro">Se aprueba una solicitud si su probabilidad de default predicha es menor al umbral de equilibrio (el punto donde la ganancia esperada de aprobar es exactamente 0). Como la ganancia si paga depende del plazo pero la pérdida si cae en default es un % fijo del monto, <b>el umbral depende del plazo, no del monto</b> — créditos más largos toleran algo más de riesgo porque generan más interés acumulado.</p>
+    <div class="card">
+      <table class="datatable" id="umbral-table"></table>
+    </div>
+
+    <h2>2. Resultado en validación (2025, resultados reales)</h2>
+    <p class="section-intro">4.874 solicitudes de 2025 que el modelo nunca vio al entrenar. Se compara la ganancia que efectivamente se hubiera obtenido con esta política, contra aprobar el 100% de las solicitudes.</p>
+    <div class="card">
+      <table class="datatable" id="policy-vs-all-table"></table>
+    </div>
+    <div class="card">
+      <h3>De dónde sale la diferencia</h3>
+      <table class="datatable" id="breakdown-table"></table>
+    </div>
+
+    <h2>3. ¿Es este el mejor umbral posible?</h2>
+    <p class="section-intro">Comparación contra usar un umbral único y fijo para todas las solicitudes (sin diferenciar por plazo). El punto marcado es la política recomendada (umbral variable por plazo) — debería estar en la zona alta de la curva o por sobre cualquier punto fijo individual.</p>
+    <div class="card">
+      <div class="chart-box"><svg class="linechart" id="gain-curve"></svg></div>
+    </div>
+
+    <h2>4. Distribución de la probabilidad de default</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Validación (2025)</h3>
+        <div class="chart-box"><svg class="hist" id="hist-valid"></svg></div>
+      </div>
+      <div class="card">
+        <h3>test.csv (12.000 solicitudes nuevas)</h3>
+        <div class="chart-box"><svg class="hist" id="hist-test"></svg></div>
+      </div>
+    </div>
+
+    <h2>5. Aplicación a test.csv</h2>
+    <p class="section-intro">test.csv no tiene resultado observado, así que aquí la "ganancia" es la <b>ganancia esperada</b> (valor esperado según la probabilidad predicha), no un resultado realizado como en la sección 2.</p>
+    <div class="card">
+      <table class="datatable" id="test-table"></table>
+      <div class="note-row" id="test-note"></div>
+    </div>
+
+    <p class="footer-note" id="footer-note"></p>
+  </div>
+  <div class="tooltip" id="tooltip"></div>
+</div>
+
+<script id="report-data" type="application/json">
+{
+  "n_valid": 4874,
+  "n_aprob_valid": 3757,
+  "ganancia_politica_valid": 404680600.0,
+  "ganancia_aprobar_todo_valid": 77239299.99999997,
+  "desglose": {
+    "perdida_evitada": 444081000.0,
+    "n_perdida_evitada": 391,
+    "costo_oportunidad": 116639700.0,
+    "n_costo_oportunidad": 726,
+    "perdida_no_detectada": 232100000.0,
+    "n_perdida_no_detectada": 248,
+    "ganancia_capturada": 636780600.0,
+    "n_ganancia_capturada": 3509
+  },
+  "curve_fixed_threshold": [
+    {
+      "threshold": 0.02,
+      "gain": 190039000.0,
+      "pct_approved": 0.2814936397209684
+    },
+    {
+      "threshold": 0.04,
+      "gain": 297590100.0,
+      "pct_approved": 0.446040213377103
+    },
+    {
+      "threshold": 0.06,
+      "gain": 349712500.0,
+      "pct_approved": 0.5558063192449734
+    },
+    {
+      "threshold": 0.08,
+      "gain": 392958100.0,
+      "pct_approved": 0.6259745588838737
+    },
+    {
+      "threshold": 0.1,
+      "gain": 402902900.0,
+      "pct_approved": 0.6823963890028724
+    },
+    {
+      "threshold": 0.12,
+      "gain": 405766500.0,
+      "pct_approved": 0.7275338530980714
+    },
+    {
+      "threshold": 0.14,
+      "gain": 393219100.0,
+      "pct_approved": 0.7617972917521543
+    },
+    {
+      "threshold": 0.16,
+      "gain": 379132600.0,
+      "pct_approved": 0.7894952810832991
+    },
+    {
+      "threshold": 0.18,
+      "gain": 374019000.0,
+      "pct_approved": 0.8167829298317604
+    },
+    {
+      "threshold": 0.2,
+      "gain": 361279800.0,
+      "pct_approved": 0.8407878539187525
+    },
+    {
+      "threshold": 0.22,
+      "gain": 354783000.0,
+      "pct_approved": 0.8617152236356176
+    },
+    {
+      "threshold": 0.24,
+      "gain": 345229600.0,
+      "pct_approved": 0.8756668034468609
+    },
+    {
+      "threshold": 0.26,
+      "gain": 328712700.0,
+      "pct_approved": 0.8890028723840788
+    },
+    {
+      "threshold": 0.28,
+      "gain": 319276600.0,
+      "pct_approved": 0.8992613869511694
+    },
+    {
+      "threshold": 0.3,
+      "gain": 306404700.0,
+      "pct_approved": 0.9097250718096019
+    },
+    {
+      "threshold": 0.32,
+      "gain": 295643500.0,
+      "pct_approved": 0.919573245794009
+    },
+    {
+      "threshold": 0.34,
+      "gain": 287386400.0,
+      "pct_approved": 0.9281903980303652
+    },
+    {
+      "threshold": 0.36,
+      "gain": 280321200.0,
+      "pct_approved": 0.9353713582273286
+    },
+    {
+      "threshold": 0.38,
+      "gain": 268163200.0,
+      "pct_approved": 0.9407057858022159
+    },
+    {
+      "threshold": 0.4,
+      "gain": 255232800.0,
+      "pct_approved": 0.9456298727944193
+    },
+    {
+      "threshold": 0.42,
+      "gain": 242313700.0,
+      "pct_approved": 0.9505539597866229
+    },
+    {
+      "threshold": 0.44,
+      "gain": 224627300.0,
+      "pct_approved": 0.9550677061961428
+    },
+    {
+      "threshold": 0.46,
+      "gain": 213102300.0,
+      "pct_approved": 0.9601969634796882
+    },
+    {
+      "threshold": 0.48,
+      "gain": 205716800.0,
+      "pct_approved": 0.9640951990151826
+    },
+    {
+      "threshold": 0.5,
+      "gain": 198866100.0,
+      "pct_approved": 0.969224456298728
+    },
+    {
+      "threshold": 0.52,
+      "gain": 193542500.0,
+      "pct_approved": 0.9718916700861715
+    },
+    {
+      "threshold": 0.54,
+      "gain": 181081800.0,
+      "pct_approved": 0.9753795650389824
+    }
+  ],
+  "tabla_umbral_por_plazo": [
+    {
+      "plazo_meses": 6,
+      "p_umbral": 0.05172413793103448
+    },
+    {
+      "plazo_meses": 12,
+      "p_umbral": 0.09836065573770492
+    },
+    {
+      "plazo_meses": 18,
+      "p_umbral": 0.140625
+    },
+    {
+      "plazo_meses": 24,
+      "p_umbral": 0.1791044776119403
+    },
+    {
+      "plazo_meses": 36,
+      "p_umbral": 0.2465753424657534
+    },
+    {
+      "plazo_meses": 48,
+      "p_umbral": 0.3037974683544304
+    }
+  ],
+  "hist_p_valid": {
+    "counts": [
+      1620,
+      846,
+      503,
+      356,
+      259,
+      196,
+      169,
+      147,
+      118,
+      90,
+      67,
+      61,
+      59,
+      47,
+      42,
+      29,
+      31,
+      26,
+      29,
+      29,
+      19,
+      18,
+      14,
+      20,
+      11,
+      15,
+      6,
+      7,
+      9,
+      6
+    ],
+    "edges": [
+      0.0,
+      0.024951599357287406,
+      0.04990319871457481,
+      0.07485479807186221,
+      0.09980639742914962,
+      0.12475799678643704,
+      0.14970959614372442,
+      0.17466119550101183,
+      0.19961279485829925,
+      0.22456439421558666,
+      0.24951599357287407,
+      0.2744675929301615,
+      0.29941919228744884,
+      0.32437079164473626,
+      0.34932239100202367,
+      0.3742739903593111,
+      0.3992255897165985,
+      0.4241771890738859,
+      0.4491287884311733,
+      0.47408038778846073,
+      0.49903198714574815,
+      0.5239835865030356,
+      0.548935185860323,
+      0.5738867852176104,
+      0.5988383845748977,
+      0.6237899839321851,
+      0.6487415832894725,
+      0.6736931826467599,
+      0.6986447820040473,
+      0.7235963813613348,
+      0.7485479807186222
+    ]
+  },
+  "n_test": 12000,
+  "n_aprob_test": 9159,
+  "ganancia_esperada_politica_test": 1222147097.752243,
+  "ganancia_esperada_aprobar_todo_test": 596007639.1052467,
+  "hist_p_test": {
+    "counts": [
+      3869,
+      2107,
+      1265,
+      857,
+      647,
+      565,
+      377,
+      325,
+      233,
+      219,
+      172,
+      174,
+      147,
+      119,
+      126,
+      95,
+      87,
+      73,
+      65,
+      56,
+      58,
+      48,
+      36,
+      34,
+      45,
+      47,
+      24,
+      31,
+      26,
+      13
+    ],
+    "edges": [
+      0.0,
+      0.025517996584761723,
+      0.051035993169523446,
+      0.07655398975428516,
+      0.10207198633904689,
+      0.1275899829238086,
+      0.15310797950857033,
+      0.17862597609333206,
+      0.20414397267809378,
+      0.2296619692628555,
+      0.2551799658476172,
+      0.28069796243237893,
+      0.30621595901714066,
+      0.3317339556019024,
+      0.3572519521866641,
+      0.38276994877142584,
+      0.40828794535618756,
+      0.4338059419409493,
+      0.459323938525711,
+      0.48484193511047274,
+      0.5103599316952344,
+      0.5358779282799961,
+      0.5613959248647579,
+      0.5869139214495196,
+      0.6124319180342813,
+      0.637949914619043,
+      0.6634679112038048,
+      0.6889859077885665,
+      0.7145039043733282,
+      0.74002190095809,
+      0.7655398975428517
+    ]
+  }
+}
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('report-data').textContent);
+const tooltip = document.getElementById('tooltip');
+
+function fmt(n, d=2) {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return Number(n).toLocaleString('es-CL', {minimumFractionDigits: d, maximumFractionDigits: d});
+}
+function fmtInt(n) { return Number(n).toLocaleString('es-CL'); }
+function fmtPct(n, d=1) { return fmt(n*100, d) + '%'; }
+function fmtCLP(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+
+function renderHero() {
+  const uplift = DATA.ganancia_politica_valid - DATA.ganancia_aprobar_todo_valid;
+  const upliftPct = (uplift / Math.abs(DATA.ganancia_aprobar_todo_valid)) * 100;
+  document.getElementById('hero-stats').innerHTML = `
+    <div class="hero-stat"><div class="num">${fmtCLP(DATA.ganancia_politica_valid)}</div><div class="lbl">Ganancia real con la política (validación 2025)</div></div>
+    <div class="hero-stat"><div class="num">${fmtCLP(DATA.ganancia_aprobar_todo_valid)}</div><div class="lbl">Ganancia real si se aprueba todo (validación 2025)</div></div>
+    <div class="hero-stat"><div class="num">${fmtPct(DATA.n_aprob_valid/DATA.n_valid)}</div><div class="lbl">% de solicitudes que la política aprueba</div></div>
+    <div class="hero-stat"><div class="num">${fmtCLP(DATA.ganancia_esperada_politica_test)}</div><div class="lbl">Ganancia esperada aplicando la política a test.csv</div></div>
+  `;
+  document.getElementById('hero-note').innerHTML =
+    `<b>La política genera ${fmt(DATA.ganancia_politica_valid/DATA.ganancia_aprobar_todo_valid,1)}x más ganancia que aprobar todo</b> en la validación (+${fmtCLP(uplift)}, ${fmt(upliftPct,0)}% más), usando resultados reales de 2025 que el modelo nunca vio. Recomendación: usar el umbral por plazo de la sección 1 como política de aprobación.`;
+}
+
+function renderUmbralTable() {
+  const rows = DATA.tabla_umbral_por_plazo.map(r => `<tr><td>${r.plazo_meses} meses</td><td>${fmtPct(r.p_umbral,1)}</td></tr>`).join('');
+  document.getElementById('umbral-table').innerHTML = `
+    <thead><tr><th>Plazo</th><th>Rechazar si probabilidad de default ≥</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+function renderPolicyVsAll() {
+  document.getElementById('policy-vs-all-table').innerHTML = `
+    <thead><tr><th></th><th>Aprobar todo</th><th>Política recomendada</th></tr></thead>
+    <tbody>
+      <tr><td>% aprobadas</td><td>100%</td><td>${fmtPct(DATA.n_aprob_valid/DATA.n_valid)} (${fmtInt(DATA.n_aprob_valid)} de ${fmtInt(DATA.n_valid)})</td></tr>
+      <tr><td>Ganancia total realizada</td><td>${fmtCLP(DATA.ganancia_aprobar_todo_valid)}</td><td class="safe">${fmtCLP(DATA.ganancia_politica_valid)}</td></tr>
+      <tr><td>Ganancia promedio por solicitud</td><td>${fmtCLP(DATA.ganancia_aprobar_todo_valid/DATA.n_valid)}</td><td class="safe">${fmtCLP(DATA.ganancia_politica_valid/DATA.n_valid)}</td></tr>
+    </tbody>`;
+}
+
+function renderBreakdown() {
+  const d = DATA.desglose;
+  document.getElementById('breakdown-table').innerHTML = `
+    <thead><tr><th>Concepto</th><th>Monto</th><th>N° solicitudes</th></tr></thead>
+    <tbody>
+      <tr class="safe"><td>Pérdida evitada (defaults rechazados correctamente)</td><td>+${fmtCLP(d.perdida_evitada)}</td><td>${fmtInt(d.n_perdida_evitada)}</td></tr>
+      <tr class="risky"><td>Costo de oportunidad (buenos pagadores rechazados de más)</td><td>−${fmtCLP(d.costo_oportunidad)}</td><td>${fmtInt(d.n_costo_oportunidad)}</td></tr>
+      <tr class="risky"><td>Pérdida que igual ocurrió (defaults no detectados y aprobados)</td><td>−${fmtCLP(d.perdida_no_detectada)}</td><td>${fmtInt(d.n_perdida_no_detectada)}</td></tr>
+      <tr class="safe"><td>Ganancia capturada (buenos pagadores aprobados)</td><td>+${fmtCLP(d.ganancia_capturada)}</td><td>${fmtInt(d.n_ganancia_capturada)}</td></tr>
+    </tbody>`;
+}
+
+function renderGainCurve() {
+  const svg = document.getElementById('gain-curve');
+  const pts = DATA.curve_fixed_threshold;
+  const W = 600, H = 240, padL = 65, padR = 15, padT = 15, padB = 30;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const xs = pts.map(p => p.threshold), ys = pts.map(p => p.gain);
+  const xMin = Math.min(...xs), xMax = Math.max(...xs);
+  const yMin = Math.min(...ys, DATA.ganancia_politica_valid, 0), yMax = Math.max(...ys, DATA.ganancia_politica_valid) * 1.05;
+  const xScale = x => padL + ((x - xMin) / (xMax - xMin)) * plotW;
+  const yScale = y => padT + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+  let html = '';
+  const nGridY = 4;
+  for (let i = 0; i <= nGridY; i++) {
+    const yVal = yMin + (i/nGridY)*(yMax-yMin);
+    const y = yScale(yVal);
+    html += `<line class="grid-line" x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
+    html += `<text class="axis-label" x="${padL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${(yVal/1e6).toFixed(0)}M</text>`;
+  }
+  const y0 = yScale(0);
+  html += `<line class="axis-line" x1="${padL}" x2="${W-padR}" y1="${y0.toFixed(1)}" y2="${y0.toFixed(1)}"/>`;
+
+  let path = pts.map((p, i) => `${i===0?'M':'L'}${xScale(p.threshold).toFixed(1)},${yScale(p.gain).toFixed(1)}`).join(' ');
+  html += `<path d="${path}" fill="none" stroke="var(--series-1)" stroke-width="2"/>`;
+  pts.forEach(p => {
+    html += `<circle cx="${xScale(p.threshold).toFixed(1)}" cy="${yScale(p.gain).toFixed(1)}" r="2.5" fill="var(--series-1)" data-t="${p.threshold}" data-g="${p.gain}" data-pct="${p.pct_approved}"></circle>`;
+  });
+
+  // punto de la politica recomendada (umbral variable) -- se grafica al nivel de su % aprobado promedio
+  const avgApproved = DATA.n_aprob_valid / DATA.n_valid;
+  // eje x aproximado: usamos el umbral promedio ponderado solo como referencia visual
+  const politicaX = 0.161; // umbral promedio de la tabla por plazo
+  html += `<circle cx="${xScale(politicaX).toFixed(1)}" cy="${yScale(DATA.ganancia_politica_valid).toFixed(1)}" r="6" fill="var(--good)" stroke="var(--surface-1)" stroke-width="2"></circle>`;
+  html += `<text class="axis-label" x="${xScale(politicaX).toFixed(1)}" y="${(yScale(DATA.ganancia_politica_valid)-12).toFixed(1)}" text-anchor="middle" font-weight="700">Política (por plazo)</text>`;
+
+  const nTicksX = 6;
+  for (let i = 0; i <= nTicksX; i++) {
+    const xVal = xMin + (i/nTicksX)*(xMax-xMin);
+    const x = xScale(xVal);
+    html += `<text class="axis-label" x="${x.toFixed(1)}" y="${H-8}" text-anchor="middle">${fmtPct(xVal,0)}</text>`;
+  }
+  html += `<text class="axis-label" x="${(padL+plotW/2).toFixed(1)}" y="${H+2}" text-anchor="middle"></text>`;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = html;
+  svg.querySelectorAll('circle[data-t]').forEach(c => {
+    c.addEventListener('mousemove', (e) => {
+      tooltip.textContent = `umbral fijo ${fmtPct(parseFloat(c.dataset.t),0)}: ganancia ${fmtCLP(parseFloat(c.dataset.g))}, ${fmtPct(parseFloat(c.dataset.pct),0)} aprobadas`;
+      tooltip.style.left = e.clientX + 'px'; tooltip.style.top = (e.clientY-10) + 'px';
+      tooltip.classList.add('show');
+    });
+    c.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+  });
+}
+
+function renderHist(svgId, histData, color) {
+  const svg = document.getElementById(svgId);
+  const edges = histData.edges, counts = histData.counts;
+  const W = 600, H = 220, padL = 40, padR = 8, padT = 8, padB = 26;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxCount = Math.max(...counts, 1);
+  const n = counts.length;
+  const barW = plotW / n;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let html = '';
+  const nGrid = 4;
+  for (let i = 0; i <= nGrid; i++) {
+    const y = padT + plotH - (i/nGrid)*plotH;
+    html += `<line class="grid-line" x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
+    html += `<text class="axis-label" x="${padL-6}" y="${(y+3).toFixed(1)}" text-anchor="end">${fmtInt(Math.round((i/nGrid)*maxCount))}</text>`;
+  }
+  html += `<line class="axis-line" x1="${padL}" x2="${W-padR}" y1="${(padT+plotH).toFixed(1)}" y2="${(padT+plotH).toFixed(1)}"/>`;
+  counts.forEach((c, i) => {
+    const h = (c/maxCount)*plotH;
+    const x = padL + i*barW;
+    html += `<rect x="${(x+0.5).toFixed(2)}" y="${(padT+plotH-h).toFixed(2)}" width="${Math.max(0,barW-1).toFixed(2)}" height="${h.toFixed(2)}" fill="${color}" data-lo="${edges[i]}" data-hi="${edges[i+1]}" data-c="${c}"></rect>`;
+  });
+  const nTicks = 5;
+  for (let i = 0; i <= nTicks; i++) {
+    const edgeIdx = Math.min(Math.round((i/nTicks)*n), n);
+    const val = edges[Math.min(edgeIdx, edges.length-1)];
+    const x = padL + Math.min(edgeIdx, n)*barW;
+    html += `<text class="axis-label" x="${x.toFixed(1)}" y="${H-6}" text-anchor="${i===0?'start':(i===nTicks?'end':'middle')}">${val.toFixed(2)}</text>`;
+  }
+  svg.innerHTML = html;
+  svg.querySelectorAll('rect').forEach(rect => {
+    rect.addEventListener('mousemove', (e) => {
+      const lo = parseFloat(rect.dataset.lo).toFixed(2), hi = parseFloat(rect.dataset.hi).toFixed(2);
+      tooltip.textContent = `score [${lo}, ${hi}]: ${fmtInt(rect.dataset.c)} solicitudes`;
+      tooltip.style.left = e.clientX + 'px'; tooltip.style.top = (e.clientY-10) + 'px';
+      tooltip.classList.add('show');
+    });
+    rect.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+  });
+}
+
+function renderTestTable() {
+  const uplift = DATA.ganancia_esperada_politica_test - DATA.ganancia_esperada_aprobar_todo_test;
+  document.getElementById('test-table').innerHTML = `
+    <thead><tr><th></th><th>Aprobar todo</th><th>Política recomendada</th></tr></thead>
+    <tbody>
+      <tr><td>% aprobadas</td><td>100%</td><td>${fmtPct(DATA.n_aprob_test/DATA.n_test)} (${fmtInt(DATA.n_aprob_test)} de ${fmtInt(DATA.n_test)})</td></tr>
+      <tr><td>Ganancia esperada total</td><td>${fmtCLP(DATA.ganancia_esperada_aprobar_todo_test)}</td><td class="safe">${fmtCLP(DATA.ganancia_esperada_politica_test)}</td></tr>
+    </tbody>`;
+  document.getElementById('test-note').innerHTML =
+    `Aplicar la política a test.csv (con el modelo entrenado sobre el 100% de train.csv) aprobaría ${fmtPct(DATA.n_aprob_test/DATA.n_test)} de las solicitudes, con una ganancia esperada ${fmtCLP(uplift)} mayor que aprobar todo. El detalle fila por fila (id_solicitud, probabilidad, umbral aplicable y recomendación) se guardó en <code>reports/round1_politica_aprobacion_test.csv</code>.`;
+}
+
+renderHero();
+renderUmbralTable();
+renderPolicyVsAll();
+renderBreakdown();
+renderGainCurve();
+renderHist('hist-valid', DATA.hist_p_valid, 'var(--series-1)');
+renderHist('hist-test', DATA.hist_p_test, 'var(--series-1)');
+renderTestTable();
+
+document.getElementById('footer-note').textContent =
+  "Modelo: regresión logística de la Ronda 1. Validación con resultados reales de 2025 (modelo entrenado solo con 2024). Aplicación a test.csv con el modelo final (entrenado con el 100% de train.csv). Economía del producto: ganancia si paga = monto × 12% × (plazo/12) × 0,5; pérdida si default = monto × 55% (LGD). Umbral de aprobación = punto de equilibrio de valor esperado, distinto por plazo. Código en code/round1/approval_policy.py.";
+</script>
