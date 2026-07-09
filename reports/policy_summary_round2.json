@@ -1,0 +1,22 @@
+{
+  "ronda": 2,
+  "nota": "Un unico modelo (entrenado solo con 2024) usado tanto para validacion como para test.csv",
+  "n_valid": 4874,
+  "n_aprob_valid": 4012,
+  "ganancia_politica_valid": 382467200.0,
+  "ganancia_aprobar_todo_valid": 77239299.99999997,
+  "desglose": {
+    "perdida_evitada": 390247000.0,
+    "n_perdida_evitada": 338,
+    "costo_oportunidad": 85019100.0,
+    "n_costo_oportunidad": 524,
+    "perdida_no_detectada": 285934000.0,
+    "n_perdida_no_detectada": 301,
+    "ganancia_capturada": 668401200.0,
+    "n_ganancia_capturada": 3711
+  },
+  "n_test": 12000,
+  "n_aprob_test": 9516,
+  "ganancia_esperada_politica_test": 1307494965.3766,
+  "ganancia_esperada_aprobar_todo_test": 785312306.4711282
+}

@@ -1,0 +1,22 @@
+{
+  "ronda": 5,
+  "nota": "Validacion sobre jul-dic 2024 (n=20426), NO ene-feb 2025 -- no comparable directamente con las otras rondas",
+  "n_valid": 20426,
+  "n_aprob_valid": 16877,
+  "ganancia_politica_valid": 2104211000.0,
+  "ganancia_aprobar_todo_valid": 1080998100.0,
+  "desglose": {
+    "perdida_evitada": 1383899000.0,
+    "n_perdida_evitada": 1279,
+    "costo_oportunidad": 360686100.0,
+    "n_costo_oportunidad": 2270,
+    "perdida_no_detectada": 962846500.0,
+    "n_perdida_no_detectada": 960,
+    "ganancia_capturada": 3067057500.0,
+    "n_ganancia_capturada": 15917
+  },
+  "n_test": 12000,
+  "n_aprob_test": 9203,
+  "ganancia_esperada_politica_test": 1235062452.3806446,
+  "ganancia_esperada_aprobar_todo_test": 587084788.2488238
+}

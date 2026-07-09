@@ -1,0 +1,22 @@
+{
+  "ronda": 6,
+  "nota": "Validacion sobre ene-feb 2025, igual que Rondas 1/3/4 -- comparable directamente",
+  "n_valid": 4874,
+  "n_aprob_valid": 3624,
+  "ganancia_politica_valid": 419944400.0,
+  "ganancia_aprobar_todo_valid": 77239299.99999997,
+  "desglose": {
+    "perdida_evitada": 479215000.0,
+    "n_perdida_evitada": 415,
+    "costo_oportunidad": 136509900.0,
+    "n_costo_oportunidad": 835,
+    "perdida_no_detectada": 196966000.0,
+    "n_perdida_no_detectada": 224,
+    "ganancia_capturada": 616910400.0,
+    "n_ganancia_capturada": 3400
+  },
+  "n_test": 12000,
+  "n_aprob_test": 9195,
+  "ganancia_esperada_politica_test": 1224411613.2901003,
+  "ganancia_esperada_aprobar_todo_test": 593499608.5831357
+}
